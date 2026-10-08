@@ -1,0 +1,55 @@
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+*:Zone.Identifier
+
+# ===== Editors / IDE =====
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== Node.js =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.eslintcache
+.stylelintcache
+
+# ===== Build output =====
+dist/
+build/
+out/
+.output/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# ===== Chromium extension packaging =====
+# 配布用パッケージ（ストア提出用 zip / crx）
+*.zip
+*.crx
+# 拡張機能の署名用秘密鍵（絶対にコミットしない）
+*.pem
+key.pem
+
+# ===== Environment / secrets =====
+.env
+.env.*
+!.env.example
+
+# ===== Test / tooling =====
+.web-ext-artifacts/
+playwright-report/
+test-results/
+
+# ===== Local Claude Code settings =====
+.claude/settings.local.json
