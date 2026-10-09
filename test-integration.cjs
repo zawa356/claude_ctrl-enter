@@ -17,6 +17,7 @@ const fixture = `<!doctype html><html><head><meta charset="utf-8"></head><body s
 <main style="flex:1;padding:20px">
   <div id="editor" class="tiptap ProseMirror" contenteditable="true" style="border:1px solid #888;min-height:60px"></div>
   <button data-testid="chat-input-send" type="button">Send</button>
+  <div id="menu" role="menu" hidden><div role="menuitem">item</div></div>
 </main>
 <section style="width:300px;padding:20px">
   <!-- A second editor (e.g. editing an earlier message) with no send button of its own. -->
@@ -26,7 +27,11 @@ const fixture = `<!doctype html><html><head><meta charset="utf-8"></head><body s
   window.log = [];
   const el = document.getElementById('editor');
   // Stand-in for Claude's tiptap editor API and its own Enter-to-send handler.
-  el.editor = { commands: { setHardBreak: () => { log.push('newline'); return true; } }, view: {} };
+  // Slash menu stand-in: plugin state + a role=menu popup, toggled by window.openMenu(bool).
+  window.suggestion = { active: false };
+  el.editor = { commands: { setHardBreak: () => { log.push('newline'); return true; } }, view: {},
+    state: { plugins: [{ key: 'slash-command-suggestion$', getState: () => window.suggestion }] } };
+  window.openMenu = open => { window.suggestion.active = open; document.getElementById('menu').hidden = !open; };
   el.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) { e.preventDefault(); log.push('app-send'); }
   });
@@ -112,6 +117,14 @@ const storageMock = () => {
     assert.deepEqual(await press('Enter'), ['newline']);
     assert.equal(await label(), '有効');
 
+    // Slash menu open: plain Enter reaches Claude's own handler (which picks the item in the real app).
+    await page.evaluate(() => openMenu(true));
+    assert.deepEqual(await press('Enter'), ['app-send'], 'Enter must pass through to Claude while the menu is open');
+    await page.evaluate(() => { window.suggestion.active = true; document.getElementById('menu').hidden = true; });
+    assert.deepEqual(await press('Enter'), ['newline'], 'suggestion active but no visible menu: keep newline');
+    await page.evaluate(() => openMenu(false));
+    assert.deepEqual(await press('Enter'), ['newline']);
+
     // Disable from the UI: Claude's default behavior comes back immediately.
     await save({ enabled: false, send: 'Ctrl+Enter', newline: 'Enter' });
     assert.equal(await dialogOpen(), false);
@@ -174,6 +187,6 @@ const storageMock = () => {
     assert.deepEqual(await barePage.evaluate(() => window.log), ['newline']);
     await bare.close();
 
-    console.log('PASS: UI<->key bridge, send scoped to its editor, status label (send-unavailable/unsupported), disable/enable, remap, unassigned swallow, reload restore, save failure, external change while open, removal->defaults, corrupted value, no storage API');
+    console.log('PASS: UI<->key bridge, send scoped to its editor, slash menu passthrough, status label (send-unavailable/unsupported), disable/enable, remap, unassigned swallow, reload restore, save failure, external change while open, removal->defaults, corrupted value, no storage API');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

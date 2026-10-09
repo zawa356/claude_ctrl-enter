@@ -9,7 +9,11 @@ const docListeners = [];
 class Element { closest() { return this.isEditor ? this : null; } }
 const editor = new Element();
 editor.isEditor = true;
-editor.editor = { commands: { setHardBreak: () => { breaks++; return true; } }, view: {} };
+// Suggestion plugin shaped like Claude's slash-command-suggestion$ (state.active toggles while the menu is open).
+const suggestion = { active: false };
+editor.editor = { commands: { setHardBreak: () => { breaks++; return true; } }, view: {},
+  state: { plugins: [{ key: 'history$', getState: () => ({}) }, { key: 'slash-command-suggestion$', getState: () => suggestion }] } };
+let menus = [];
 const button = { disabled: false, getClientRects: () => [1], getAttribute: () => null, click: () => sends++ };
 let buttons = [button];
 let editors = [editor];
@@ -22,7 +26,7 @@ const context = vm.createContext({ window, Element, AbortController, performance
   location: { origin: 'https://claude.ai' }, document: {
     addEventListener: (type, fn, options) => docListeners.push({type, fn, options}),
     documentElement: { setAttribute: (_, value) => status = value, getAttribute: () => JSON.stringify(savedSettings) },
-    querySelector: () => editor, querySelectorAll: () => buttons
+    querySelector: () => editor, querySelectorAll: s => s.includes('menu') ? menus : buttons
   }
 });
 function event(type, extra = {}) {
@@ -58,6 +62,20 @@ delete editor.editor.commands.setHardBreak;
 assert.equal(event('keydown', { ctrlKey: true }).prevented, true);
 assert.equal(sends, 1); assert.equal(status, 'unsupported');
 editor.editor.commands.setHardBreak = command;
+// Slash/mention menu open: plain Enter goes to Claude untouched (picks the item).
+const breaksBefore = breaks;
+suggestion.active = true; menus = [{ getClientRects: () => [1] }];
+let menuEvent = event('keydown');
+assert.equal(menuEvent.prevented, undefined); assert.equal(menuEvent.stopped, undefined); assert.equal(breaks, breaksBefore);
+// Suggestion active but no visible menu (e.g. no matches): keep intercepting, never fall through to Claude's send.
+menus = [{ getClientRects: () => [] }];
+assert.equal(event('keydown').prevented, true); assert.equal(breaks, breaksBefore + 1);
+// Plugin state throws: treated as closed.
+suggestion.active = true; menus = [{ getClientRects: () => [1] }];
+editor.editor.state.plugins[1].getState = () => { throw new Error('x'); };
+assert.equal(event('keydown').prevented, true);
+editor.editor.state.plugins[1].getState = () => suggestion;
+suggestion.active = false; menus = []; breaks = breaksBefore;
 function configure(value) {
   savedSettings = value;
   for (const l of docListeners) if (!l.options.signal.aborted) l.fn();
@@ -72,4 +90,4 @@ assert.equal(event('keydown').prevented, true); assert.equal(sends, 2);
 configure({ enabled:true, send:'Enter', newline:'Enter' });
 event('keydown'); assert.equal(sends, 2);
 window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, 4);
-console.log('PASS: newline, send, repeat, IME, timing, modifiers, scope, disabled/ambiguous send, send scoped to editor, duplicate install, incompatible API, teardown');
+console.log('PASS: newline, send, repeat, IME, timing, modifiers, scope, disabled/ambiguous send, send scoped to editor, slash/mention menu Enter passthrough, duplicate install, incompatible API, teardown');

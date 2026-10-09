@@ -24,6 +24,16 @@
     return states.get(el);
   };
   const compatible = el => typeof el?.editor?.commands?.setHardBreak === 'function';
+  // Slash-command / mention menus are tiptap suggestion plugins whose state has active:true while open
+  // (observed on Claude 2.31226: slash-command-suggestion$, mention$). Plain Enter must reach Claude
+  // there to pick the item. Also require a visible menu, so an empty suggestion never falls through
+  // to Claude's Enter-to-send. Any doubt -> false -> normal handling (newline), never an unexpected send.
+  const menuOpen = editor => {
+    try {
+      const active = editor.state.plugins.some(p => /suggestion|mention/i.test(p.key) && p.getState(editor.state)?.active === true);
+      return active && [...document.querySelectorAll('[role="menu"],[role="listbox"]')].some(m => m.getClientRects().length > 0);
+    } catch { return false; }
+  };
   // Find the send button that belongs to this editor: the nearest ancestor holding exactly one
   // visible send button, and no other editor. Anything ambiguous returns null (no send).
   const sendButtonFor = el => {
@@ -69,6 +79,7 @@
     }
     if (e.metaKey) return;
     const key = [e.ctrlKey && 'Ctrl', e.shiftKey && 'Shift', e.altKey && 'Alt', 'Enter'].filter(Boolean).join('+');
+    if (key === 'Enter' && editor && menuOpen(editor)) return;
     const action = key === settings.send ? 'send' : key === settings.newline ? 'newline' : null;
     if (!action) {
       if (key === 'Enter' || key === 'Ctrl+Enter') { e.preventDefault(); e.stopImmediatePropagation(); }
