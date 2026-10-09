@@ -7,9 +7,9 @@ const os = require('node:os');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 
-const script = path.join(__dirname, 'scripts', 'claude-keys.ps1');
+const script = path.join(__dirname, '..', 'scripts', 'claude-keys.ps1');
 const id = 'fmkadmapgofadopljbjfkapdkoienihi';
-const sources = fs.readdirSync(path.join(__dirname, 'extension'));
+const sources = fs.readdirSync(path.join(__dirname, '..', 'extension'));
 
 const roots = [];
 process.on('exit', () => { for (const r of roots) fs.rmSync(r, { recursive: true, force: true }); });

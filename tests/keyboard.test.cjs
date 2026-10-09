@@ -2,9 +2,9 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const code = readFileSync(join(__dirname, 'extension/main-probe.js'), 'utf8');
+const code = readFileSync(join(__dirname, '..', 'extension', 'keys.js'), 'utf8');
 let now = 1000, breaks = 0, sends = 0, status;
-let savedSettings = { enabled: true, send: 'Ctrl+Enter', newline: 'Enter' }; // as delivered by badge.js
+let savedSettings = { enabled: true, send: 'Ctrl+Enter', newline: 'Enter' }; // as delivered by settings-ui.js
 const docListeners = [];
 class Element { closest() { return this.isEditor ? this : null; } }
 const editor = new Element();
@@ -90,7 +90,7 @@ assert.equal(event('keydown').prevented, true); assert.equal(sends, 2);
 configure({ enabled:true, send:'Enter', newline:'Enter' });
 event('keydown'); assert.equal(sends, 2);
 window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, 4);
-// Before badge.js delivers the stored settings: newline works, the send key never sends.
+// Before settings-ui.js delivers the stored settings: newline works, the send key never sends.
 // Delivery (event) or the 3s fallback timer makes the configuration live.
 function pendingContext() {
   const t = { sends: 0, breaks: 0, attr: null, timers: [], keyListeners: [], docListeners: [] };

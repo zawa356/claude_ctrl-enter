@@ -1,38 +1,46 @@
-# コントリビューションガイド
+# コントリビューションガイド / Contributing
 
 ## 開発環境
 
-- Chromium 系ブラウザ（Chrome / Edge など）の最新安定版
-- エディタは `.editorconfig` に対応したものを推奨（UTF-8 / LF / インデント 2 スペース）
+- Windows 10 / 11、Windows PowerShell 5.1
+- Node.js 20 以上（テスト用）。`npm install` で Playwright を取得します。ブラウザーは Windows 標準の Microsoft Edge を使います。
+- エディターは `.editorconfig` 対応のものを推奨します。
+  - `*.ps1` は **UTF-8（BOM付き）・CRLF**。BOM が無いと PowerShell 5.1 で日本語が化けます。
+  - `*.bat` は CRLF。
+  - それ以外は UTF-8・LF。
 
 ## 開発の流れ
 
 1. `main` から作業ブランチを作成します（例: `feature/xxx`, `fix/xxx`）。
-2. 変更を加え、[README.md](README.md) の手順で拡張機能を読み込み動作確認します。
-3. ユーザーに影響する変更は [CHANGELOG.md](CHANGELOG.md) の `Unreleased` に追記します。
-4. Pull Request を作成します。
+2. 変更を加え、`npm test` がすべて成功することを確認します。キー処理を変えたら `tests/` にテストを追加してください。
+3. 実際の Claude で確認する場合は、リポジトリの `install.bat` で導入し、Claude を完全に終了して起動し直します。
+4. 利用者に影響する変更は [CHANGELOG.md](CHANGELOG.md) の `Unreleased` に追記します。
+5. Pull Request を作成します。模擬テストでの確認か、実際の Claude での確認かを区別して書いてください。
+
+## 守ること
+
+- Claude 本体（`claude.exe`、`app.asar`、`C:\Program Files\WindowsApps` 配下）や署名・権限を変更しないこと。
+- インストーラーは bat と ps1 だけで完結させること。exe 化、コード署名の必須化、外部からのダウンロード、管理者権限、実行ポリシーの恒久変更は行わないこと。
+- 拡張の導入先フォルダー（`extensions\fmkadmapgofadopljbjfkapdkoienihi`）を変えないこと。拡張 ID はこのフォルダーのパスから計算されるため、変えると利用者の設定が失われます。`manifest.json` に `key` を追加することも同じ理由で禁止です。
+- 権限は最小限に。外部通信やリモートコードの読み込みはしないこと。データの扱いを変える場合は [PRIVACY.md](PRIVACY.md) も更新すること。
+- キー処理では、IME 変換中の Enter と、誤送信につながる動作に特に注意すること。判断に迷う場合は「送信しない」側に倒すこと。
 
 ## コミットメッセージ
 
 [Conventional Commits](https://www.conventionalcommits.org/ja/v1.0.0/) 形式を推奨します。
 
-```
-feat: Ctrl+Enter で送信する機能を追加
-fix: IME 変換中の Enter で送信されてしまう問題を修正
-docs: README にインストール手順を追記
-```
-
-## 実装上の注意
-
-- **Manifest V3** を前提とします。
-- **権限は最小限に。** `permissions` / `host_permissions` は必要なものだけを宣言し、追加する場合は PR で理由を説明してください。
-- リモートコード（外部 CDN のスクリプト等）は読み込まないでください（Chrome Web Store のポリシー違反になります）。
-- キー入力を扱う場合は IME 変換中（`event.isComposing`）の考慮を忘れないでください。
-- ユーザーデータを収集・送信する変更を加える場合は [PRIVACY.md](PRIVACY.md) も更新してください。
-
 ## リリース手順
 
-1. `src/manifest.json` の `version` を更新します。
-2. `CHANGELOG.md` の `Unreleased` をバージョン番号付きの見出しに変更します。
-3. タグを作成します（例: `git tag v0.1.0`）。
-4. zip を作成し、Chrome Web Store / Edge アドオンに提出します。
+1. `extension/manifest.json` と `package.json` の `version` を更新します。
+2. `CHANGELOG.md` の `Unreleased` を `## [x.y.z] - YYYY-MM-DD` に変更します。
+3. コミットしてタグを作成し、push します（例: `git tag v0.3.0 && git push origin v0.3.0`）。
+   GitHub Actions がテストを実行し、配布用 ZIP と `SHA256SUMS.txt` を Release に添付します。
+4. 手元で作る場合は `scripts\build-release.ps1` を実行します（`dist\` に出力）。
+
+---
+
+## English summary
+
+Requirements: Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`). Keep `*.ps1` as UTF-8 with BOM and CRLF.
+Never modify Claude's own files, never change the extension install folder or add a manifest `key` (it would change the extension ID and lose users' settings), keep the installer as plain .bat + .ps1, and when in doubt make key handling *not* send.
+Release: bump versions in `extension/manifest.json` and `package.json`, date the CHANGELOG section, then push a `vX.Y.Z` tag; CI builds the ZIP and attaches it to the GitHub Release.

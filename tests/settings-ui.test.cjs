@@ -16,7 +16,7 @@ const assert = require('node:assert/strict');
         }, onChanged: { addListener() {} }
       };
     });
-    await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname,'extension/badge.js'),'utf8') });
+    await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname,'..','extension','settings-ui.js'),'utf8') });
     await page.getByRole('button', { name: /キー設定/ }).click();
     await page.getByLabel('キー設定を有効にする').uncheck();
     await page.getByLabel('送信キー').selectOption('Enter');
@@ -29,7 +29,7 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('dialog').evaluate(el => el.open), false);
     await page.getByRole('button', { name: /キー設定/ }).click();
     assert.equal(await page.getByLabel('キー設定を有効にする').isChecked(), false);
-    await page.screenshot({path:path.join(__dirname,'settings-preview.png')});
+    await page.screenshot({path:path.join(__dirname,'..','settings-preview.png')});
     await page.getByRole('button', { name: '初期値', exact: true }).click();
     await page.getByRole('button', { name: '閉じる', exact: true }).click();
     assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('claudeEnterSettingsV1'))),stored);

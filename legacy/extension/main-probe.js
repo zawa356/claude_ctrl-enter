@@ -9,17 +9,11 @@
   const states = new WeakMap();
   const defaults = { enabled: true, send: 'Ctrl+Enter', newline: 'Enter' };
   let settings = defaults;
-  // Until badge.js delivers the stored settings, run on defaults but never send: the stored layout
-  // may differ (e.g. disabled, or another send key). If nothing arrives, fall back to defaults.
-  let ready = false;
-  const readyTimer = setTimeout(() => { ready = true; }, 3000);
   const readSettings = () => {
     try {
       const value = JSON.parse(document.documentElement.getAttribute('data-claude-enter-settings'));
       const keys = ['Enter', 'Ctrl+Enter', 'Shift+Enter', 'Alt+Enter'];
-      if (value && typeof value.enabled === 'boolean' && keys.includes(value.send) && keys.includes(value.newline) && value.send !== value.newline) {
-        settings = value; ready = true; clearTimeout(readyTimer);
-      }
+      if (value && typeof value.enabled === 'boolean' && keys.includes(value.send) && keys.includes(value.newline) && value.send !== value.newline) settings = value;
     } catch {}
   };
   readSettings();
@@ -30,28 +24,6 @@
     return states.get(el);
   };
   const compatible = el => typeof el?.editor?.commands?.setHardBreak === 'function';
-  // Slash-command / mention menus are tiptap suggestion plugins whose state has active:true while open
-  // (observed on Claude 2.31226: slash-command-suggestion$, mention$). Plain Enter must reach Claude
-  // there to pick the item. Also require a visible menu, so an empty suggestion never falls through
-  // to Claude's Enter-to-send. Any doubt -> false -> normal handling (newline), never an unexpected send.
-  const menuOpen = editor => {
-    try {
-      const active = editor.state.plugins.some(p => /suggestion|mention/i.test(p.key) && p.getState(editor.state)?.active === true);
-      return active && [...document.querySelectorAll('[role="menu"],[role="listbox"]')].some(m => m.getClientRects().length > 0);
-    } catch { return false; }
-  };
-  // Find the send button that belongs to this editor: the nearest ancestor holding exactly one
-  // visible send button, and no other editor. Anything ambiguous returns null (no send).
-  const sendButtonFor = el => {
-    for (let node = el.parentElement; node; node = node.parentElement) {
-      const buttons = [...node.querySelectorAll('button[data-testid="chat-input-send"]')]
-        .filter(b => b.getClientRects().length > 0);
-      if (!buttons.length) continue;
-      if (buttons.length > 1 || [...node.querySelectorAll(selector)].some(other => other !== el)) return null;
-      return buttons[0];
-    }
-    return null;
-  };
   window.addEventListener('compositionstart', e => {
     const el = input(e);
     if (el) stateFor(el).composing = true;
@@ -85,7 +57,6 @@
     }
     if (e.metaKey) return;
     const key = [e.ctrlKey && 'Ctrl', e.shiftKey && 'Shift', e.altKey && 'Alt', 'Enter'].filter(Boolean).join('+');
-    if (key === 'Enter' && editor && menuOpen(editor)) return;
     const action = key === settings.send ? 'send' : key === settings.newline ? 'newline' : null;
     if (!action) {
       if (key === 'Enter' || key === 'Ctrl+Enter') { e.preventDefault(); e.stopImmediatePropagation(); }
@@ -93,12 +64,14 @@
     }
     e.preventDefault();
     e.stopImmediatePropagation();
-    if (e.repeat || (action === 'send' && !ready)) return;
+    if (e.repeat) return;
     if (!compatible(el)) { status('unsupported'); return; }
     try {
       if (action === 'send') {
-        const button = sendButtonFor(el);
-        if (!button) { status('send-unavailable'); return; }
+        const buttons = [...document.querySelectorAll('button[data-testid="chat-input-send"]')]
+          .filter(b => b.getClientRects().length > 0);
+        if (buttons.length !== 1) { status('send-unavailable'); return; }
+        const button = buttons[0];
         if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
         button.click();
       } else if (editor.commands.setHardBreak() !== true) {
@@ -117,7 +90,7 @@
     status(!settings.enabled ? 'disabled' : el ? (compatible(el) ? 'active' : 'unsupported') : 'waiting');
     if (!el && ++attempts < 240) timer = setTimeout(check, 500);
   };
-  controller.signal.addEventListener('abort', () => { clearTimeout(timer); clearTimeout(readyTimer); }, { once: true });
+  controller.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
   document.addEventListener('claude-enter-settings-changed', () => { readSettings(); clearTimeout(timer); check(); }, { signal: controller.signal });
   check();
 })();

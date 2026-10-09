@@ -1,4 +1,4 @@
-// Runs badge.js (settings UI) and main-probe.js (key handling) together on a fixture page,
+// Runs settings-ui.js (settings UI) and keys.js (key handling) together on a fixture page,
 // driving them with real Chromium key events. chrome.storage is mocked with localStorage.
 // This verifies the DOM bridge between the two scripts; it does not reproduce Claude's real
 // editor, real IME event order, or Electron's extension storage.
@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 
-const read = name => fs.readFileSync(path.join(__dirname, 'extension', name), 'utf8');
+const read = name => fs.readFileSync(path.join(__dirname, '..', 'extension', name), 'utf8');
 const fixture = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;display:flex">
 <aside data-testid="sidebar" style="width:280px;height:100vh;display:flex;flex-direction:column">
   <div style="flex:1">sidebar fixture</div>
@@ -74,8 +74,8 @@ const storageMock = () => {
 
     const load = async () => {
       await page.goto('https://claude.ai/new');
-      await page.addScriptTag({ content: read('main-probe.js') });
-      await page.addScriptTag({ content: read('badge.js') });
+      await page.addScriptTag({ content: read('keys.js') });
+      await page.addScriptTag({ content: read('settings-ui.js') });
       await page.waitForFunction(() => document.documentElement.hasAttribute('data-claude-enter-settings'));
     };
     const press = async (key, target = '#editor') => {
@@ -176,8 +176,8 @@ const storageMock = () => {
     const barePage = await bare.newPage();
     await barePage.goto('https://claude.ai/new');
     await barePage.evaluate(() => { if (window.chrome) delete window.chrome.storage; });
-    await barePage.addScriptTag({ content: read('main-probe.js') });
-    await barePage.addScriptTag({ content: read('badge.js') });
+    await barePage.addScriptTag({ content: read('keys.js') });
+    await barePage.addScriptTag({ content: read('settings-ui.js') });
     await barePage.getByRole('button', { name: /キー設定/ }).click();
     await barePage.getByText('設定の保存機能を使えません').waitFor();
     assert.equal(await barePage.getByRole('button', { name: '保存', exact: true }).isDisabled(), true);

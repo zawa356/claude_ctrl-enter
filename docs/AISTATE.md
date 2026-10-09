@@ -14,8 +14,8 @@ RULES FOR THIS FILE:
 
 ## 0. QUICK
 project=Claude Desktop (Windows MSIX) key-binding extension: Enter=newline, Ctrl+Enter=send, IME-safe, sidebar settings UI.
-goal=GitHub公開品質 + 一般ユーザーが簡単に導入/更新/解除. ※公開許可・公開先・ライセンスは未確定(ISSUE-14).
-current_ext_version=manifest 0.2.0 (+ unreleased fixes in repo, see LOG). installer: install.bat/uninstall.bat/diagnose.bat → scripts/claude-keys.ps1. target Claude=2.26454.2 (MSIX 2.26454.2.0).
+goal=GitHub公開 (zawa356/claude_ctrl-enter, currently PRIVATE) + 一般ユーザーが簡単に導入/更新/解除. license MIT holder zawa356 (DEC-11).
+current_ext_version=0.3.0 "Claude Ctrl+Enter" (DEC-13 layout). installer: install.bat/uninstall.bat/diagnose.bat → scripts/claude-keys.ps1. release: scripts/build-release.ps1 / CI tag v*. tested Claude 2.26454.2.0, 2.31226.0.0.
 start_here: AGENTS.md(rules) → this file → docs/AI_HANDOFF_JA.md(deep background, 2026-10-08 snapshot) → extension/*.
 test: `npm test` (PowerShell; see TOOLING). all 3 suites must PASS before commit.
 user_lang=Japanese (always reply JA). user dislikes multi-step instructions: ask ONE real-machine action at a time.
@@ -29,7 +29,7 @@ user_lang=Japanese (always reply JA). user dislikes multi-step instructions: ask
 - don't commit: Claude binaries, asar copies, profiles, credentials, chat logs, user screenshots.
 - distinguish [AI_SIM] vs [USER_REAL]; never claim other-version/all-IME support by guess.
 - "Electron supports X" ≠ "this Claude build allows X" (Claude rejects remote-debugging args itself).
-- commit only with user consent (so far user approves per batch). push/publish: NOT authorized.
+- (L26) commit/push/gh allowed by user for this repo. still ASK before: force push, repo delete/recreate, visibility change, publishing a Release. [SUPERSEDES: earlier "push/publish NOT authorized"]
 
 ## 2. ENVIRONMENTS
 ENV-ORIG: ChatGPT-Work era PC. has 0.2.0 installed & running [USER_REAL]. state: %LOCALAPPDATA%\ClaudePatchLab\enter-probe-state\{state.json,uninstall-probe.ps1,backup-*}. NOT accessible from current sessions. do not re-run installer there.
@@ -72,6 +72,9 @@ DEC-04 (CONFIRMED by ID calc L21) keep install folder path & ID folder name fore
 DEC-05 (2026-10-09) send button resolved per editor: walk ancestors from editor; first ancestor with ≥1 visible send button must have exactly 1 and contain no other editor, else no send (status send-unavailable).
 DEC-07 (2026-10-09, user) installer = plain .bat + .ps1 only. no exe/MSI/signing, no downloads, no admin, no global ExecutionPolicy change (bat uses process-scope -ExecutionPolicy Bypass). reason: SAC / AV block elaborate installers; signing is burdensome. keep scripts readable (no obfuscation).
 DEC-08 (2026-10-09) script layout: scripts/claude-keys.ps1 (single script, -Action), root *.bat wrappers (diagnose.bat now; install/uninstall later). ps1 = UTF-8 BOM + CRLF (PS5.1 garbles BOM-less JA); bat = CRLF ASCII. enforced by .gitattributes + .editorconfig. ownership marker file claude-keys.owner.json planned (ISSUE-06).
+DEC-11 (2026-10-09, user) license MIT (user had no preference, even 0BSD ok; MIT kept: already present, widely understood). copyright holder = GitHub account zawa356. NEVER put user real name anywhere (repo, commit author/email, messages).
+DEC-12 (2026-10-09, user) publish everything except personal info: AI docs (AISTATE, AI_HANDOFF_JA, AGENTS, CONTINUE_PROMPT) are public. C:\Users\zawa test paths OK. never commit Claude config contents with org ids etc.
+DEC-13 (2026-10-09) repo layout for release: extension/keys.js (MAIN, was main-probe.js), extension/settings-ui.js (isolated, was badge.js), manifest name "Claude Ctrl+Enter" v0.3.0 (name change safe: ID from path, new uninstall uses marker; legacy uninstall-probe.ps1 would now refuse = acceptable), tests/*.test.cjs, legacy/{extension(0.2.0 blobs), install-probe.ps1, uninstall-probe.ps1, README.md}, scripts/build-release.ps1 → dist/claude-ctrl-enter-<ver>.zip (top folder claude-ctrl-enter-<ver>/, files: 3 bat, scripts/claude-keys.ps1, extension/*, README.md, README.en.md, LICENSE, CHANGELOG.md, PRIVACY.md, inner SHA256SUMS.txt) + dist/SHA256SUMS.txt; checks version consistency manifest/package.json/CHANGELOG section and clean git. .github/workflows/ci.yml: windows-latest npm ci + npm test; on tag v* build + gh release create with CHANGELOG section notes. README.md = JA primary, README.en.md = EN, Quick start first.
 DEC-10 (2026-10-09) startup: both scripts run_at document_start; MAIN starts with ready=false → defaults apply but action send is swallowed (no send) until valid settings arrive via bridge; 3s fallback timer sets ready=true so a broken badge.js never disables sending forever.
 DEC-09 (2026-10-09) suggestion-menu detection requires BOTH plugin active state AND visible menu; on doubt intercept as newline (fail-safe = no unexpected send). key-name filter instead of any "active" plugin, because a stuck unrelated active flag would route Enter to Claude (= send).
 DEC-06 (2026-10-09) knowledge store = docs/AISTATE.md (this), updated every work unit; AGENTS.md points here.
@@ -89,8 +92,8 @@ ISSUE-09 RESOLVED(L12) [USER_REAL ENV-VM, Claude 2.31226.0.0]: extension loads W
 ISSUE-10 PARTIAL(L07: sidebar label+dialog reflect MAIN status, [AI_SIM]; installer version check still OPEN) UI showed only enabled/disabled label; MAIN status (unsupported/send-unavailable) invisible. compat detection: runtime only; installer has no Claude-version check (plan: warn on untested version, don't block).
 ISSUE-11 OPEN sidebar remount judged by host.isConnected only; multiple sidebars/rail/overlay unverified; rail (<160px) hides entry → settings unreachable.
 ISSUE-12 PARTIAL integration test added (L04, extended L07) (test-integration.cjs) but runs both scripts in page world (not MAIN/isolated split), mock editor, no real IME.
-ISSUE-13 OPEN repo hygiene: README describes old plan (src/, macOS Cmd+Enter, browser support) ≠ implementation; duplicate docs/00_work_hikitsugi; empty docs/01_shijisho; CONTRIBUTING mentions src/manifest.json; PRIVACY permissions table TODO.
-ISSUE-14 OPEN LICENSE file = MIT (Copyright 2026 zawa356) from user's initial commit 784476a, but handoff says license undecided → ask user before relying on it.
+ISSUE-13 RESOLVED(L26: README ja/en rewritten, duplicates removed, CONTRIBUTING/PRIVACY rewritten) repo hygiene: README describes old plan (src/, macOS Cmd+Enter, browser support) ≠ implementation; duplicate docs/00_work_hikitsugi; empty docs/01_shijisho; CONTRIBUTING mentions src/manifest.json; PRIVACY permissions table TODO.
+ISSUE-14 RESOLVED(L26: user delegated choice → keep MIT, holder zawa356) LICENSE file = MIT (Copyright 2026 zawa356) from user's initial commit 784476a, but handoff says license undecided → ask user before relying on it.
 ISSUE-15 OPEN newline on key repeat suppressed (holding Enter gives 1 newline) — minor UX diff.
 ISSUE-20 FIXED(L20, [AI_SIM] sandbox + real read-only diagnose on ENV-VM) (L17) MSIX virtualization: Claude userData split between real %APPDATA%/Claude and Packages/<PFN>/LocalCache/Roaming/Claude (ENV-VM). installer/diagnose only look at real path → may miss a React DevTools folder or developer_settings in virtual path. fix: check both (PFN from Get-AppxPackage).
 ISSUE-21 PARKED (user decision L19) one-off: ext ON, Doc/Slides picked via slash menu + Enter → message sent + navigated to Slides (first test only). NOT reproducible: ext OFF empty/with text, ext ON empty/with text (Enter newline then /sli + Enter) all → chip only. ext only clicks send on assigned send key; menuOpen verified true for Doc/Slides. possible causes [GUESS]: Enter before menu rendered, or Claude-side transient. revisit only if reported again.
@@ -100,7 +103,7 @@ ISSUE-19 OPEN updating while Claude runs: directory rename may fail if Chromium 
 ISSUE-17 OPEN downloaded ZIP carries Mark-of-the-Web → SmartScreen/SAC may block or prompt .bat/.ps1; untested. test with a real downloaded ZIP at release stage; document Unblock / "詳細情報→実行".
 ISSUE-16 RESOLVED(L13) real-machine verification of ISSUE-01 fix (single composer case) requires install on ENV-VM (needs installer work or one-off manual install with checkpoint).
 
-## 7. FILE MAP
+## 7. FILE MAP (pre-L26 names; see DEC-13 for current layout)
 extension/{manifest.json,main-probe.js,badge.js} = shipped ext. install-probe.ps1/uninstall-probe.ps1 = prototype scripts (not public-grade).
 test-keyboard.cjs (node vm mock of main-probe), test-settings-ui.cjs (Playwright+Edge, badge only), test-integration.cjs (Playwright+Edge, badge+main, real key events, storage mock with failure injection & onChanged).
 docs/AI_HANDOFF_JA.md = ChatGPT-era full handoff (frozen 2026-10-08). docs/PROTOTYPE_README_SNAPSHOT.md = old prototype README. docs/HANDOFF_VALIDATION.md. CONTINUE_PROMPT.md = initial prompt to VS Code AI.
@@ -132,6 +135,7 @@ L22 2026-10-09 [USER_REAL ENV-VM 2.31226] uninstall round trip part 1: user set 
 L23 2026-10-09 [USER_REAL ENV-VM 2.31226] uninstall round trip part 2: install.bat after removed state → fresh install (state installed, envSetByUs true, marker present, REACT_PROFILE=1) [AI_READ]; user restarted Claude → sidebar shows 無効 = settings saved before uninstall carried over (same path → same ID aklgdl...). FULL ROUND TRIP VERIFIED: install, update while running, uninstall, reinstall, settings persistence. not yet verified on 2.31226: plain restart persistence was implicitly verified by this round trip.
 L24 2026-10-09 ISSUE-04: main-probe.js ready flag + readyTimer(3000ms, cleared on settings/abort); send swallowed while !ready. manifest run_at document_idle→document_start (both scripts). test-keyboard: initial savedSettings now delivered defaults; new pendingContext() block (fake timers): newline before load, no send before load, send after delivery, fallback after 3s, disabled applies on arrival. old code FAIL / new PASS. CHANGELOG. not yet deployed to ENV-VM. user left ext DISABLED after round-trip test (may re-enable).
 L25 2026-10-09 [USER_REAL ENV-VM 2.31226] install.bat update → restart → checklist OK (sidebar shows, re-enabled via UI, Enter newline / Ctrl+Enter send, slash menu Enter) — user: "問題なさそう". user wants to stop testing and move to publication prep; asked which tests are still mandatory.
+L26 2026-10-09 publication prep (user: license 良しなに/0BSD ok, author zawa356, publish all non-personal, mask real name, README ja+en with Quick start first, v0.3.0 + release ZIP + hashes, decide legacy scripts; commit/push/gh allowed). committed ISSUE-04 fix (was 2ce39b2). found real name in first 2 commits author/email (784476a, 2ef8bf8 — already pushed to PRIVATE remote origin zawa356/claude_ctrl-enter) and LICENSE/AISTATE text in all commits. backed up full history to scratchpad pre-rewrite.bundle; git filter-branch env-filter (real-name email → zawa356 <zawa@mail.zawazawa.net>) + tree-filter sed LICENSE/AISTATE; verified only those 2 lines differ vs old HEAD; deleted refs/original, reflog expire, gc. remote still has old 2ef8bf8 (real name) → needs repo recreate or force push (GitHub Activity may keep force-push refs) — ASK USER. token scopes lack delete_repo. restructure per DEC-13; legacy/extension restored from first snapshot commit (content identical, SHA256 differs from handoff due to LF normalization). manifest 0.3.0 + rename, package.json/lock 0.3.0, CHANGELOG [0.3.0] - 2026-10-09 + history entries, README ja/en, PRIVACY, CONTRIBUTING, legacy/README, CI workflow. npm test all PASS after restructure.
 
 ## 9. NEXT (proposed order; user picks)
 N1 DONE (c6a4977 fix, 83c9fa9 docs).

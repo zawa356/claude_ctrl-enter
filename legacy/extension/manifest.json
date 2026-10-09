@@ -1,17 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Claude Ctrl+Enter",
-  "version": "0.3.0",
-  "description": "Enter for newline, Ctrl+Enter to send in Claude Desktop, with Japanese IME protection and configurable keys.",
+  "name": "Claude Enter Patch - Load Probe",
+  "version": "0.2.0",
+  "description": "Experimental Enter newline and Ctrl+Enter send with IME protection.",
   "content_scripts": [
     {
       "matches": [
         "https://claude.ai/*"
       ],
       "js": [
-        "keys.js"
+        "main-probe.js"
       ],
-      "run_at": "document_start",
+      "run_at": "document_idle",
       "world": "MAIN",
       "all_frames": false
     },
@@ -20,9 +20,9 @@
         "https://claude.ai/*"
       ],
       "js": [
-        "settings-ui.js"
+        "badge.js"
       ],
-      "run_at": "document_start",
+      "run_at": "document_idle",
       "all_frames": false
     }
   ],
