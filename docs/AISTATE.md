@@ -37,6 +37,7 @@ ENV-VM: current dev machine (VS Code + Claude Code). Hyper-V VM, user takes chec
   2026-10-09 baseline [AI_READ]: Claude MSIX 2.26454.2.0 installed; %APPDATA%\Claude exists (no extensions\, no developer_settings.json); REACT_PROFILE unset (User & Machine); no ClaudePatchLab dir; PS 5.1.26100; Edge present; winget 1.29.
   user checkpoint "clean-before-node"-like taken 2026-10-09 before Node install (name chosen by user; I suggested clean-before-node).
   Node v24.20.0 installed via winget 2026-10-09 (machine-wide MSI).
+  security [AI_READ 2026-10-09]: SAC VerifiedAndReputablePolicyState=2 (evaluation), Defender RTP on, ExecutionPolicy all Undefined (=Restricted default on client).
 
 ## 3. TOOLING / GOTCHAS
 - Bash tool PATH lacks node; PowerShell tool needs PATH refresh after install:
@@ -67,6 +68,8 @@ DEC-02 send by clicking existing send button (not internal command / synthetic E
 DEC-03 settings UI in sidebar above profile (native menu unreachable from extension).
 DEC-04 keep install folder path & ID folder name forever; do NOT add manifest "key" (would change ID → settings lost) [GUESS-based, keep until verified]. renaming manifest name requires changing uninstall ownership check to a marker file first.
 DEC-05 (2026-10-09) send button resolved per editor: walk ancestors from editor; first ancestor with ≥1 visible send button must have exactly 1 and contain no other editor, else no send (status send-unavailable).
+DEC-07 (2026-10-09, user) installer = plain .bat + .ps1 only. no exe/MSI/signing, no downloads, no admin, no global ExecutionPolicy change (bat uses process-scope -ExecutionPolicy Bypass). reason: SAC / AV block elaborate installers; signing is burdensome. keep scripts readable (no obfuscation).
+DEC-08 (2026-10-09) script layout: scripts/claude-keys.ps1 (single script, -Action), root *.bat wrappers (diagnose.bat now; install/uninstall later). ps1 = UTF-8 BOM + CRLF (PS5.1 garbles BOM-less JA); bat = CRLF ASCII. enforced by .gitattributes + .editorconfig. ownership marker file claude-keys.owner.json planned (ISSUE-06).
 DEC-06 (2026-10-09) knowledge store = docs/AISTATE.md (this), updated every work unit; AGENTS.md points here.
 
 ## 6. ISSUES (from 2026-10-09 review; status: OPEN|FIXED|WONTFIX)
@@ -76,7 +79,7 @@ ISSUE-03 OPEN Enter in slash-command/mention suggestion menus is intercepted as 
 ISSUE-04 OPEN before settings load MAIN uses defaults(enabled) [AI_SIM]; before document_idle no patch at all (Claude default Enter=send). options: run_at document_start; safe pending state.
 ISSUE-05 FIXED(L07, [AI_SIM]) badge.js: chrome.storage missing → sync TypeError at get() → no UI (badge.js:~73). corrupted stored value silently → defaults. onChanged with removed value ignored. dialog open + external change → stale form overwrites.
 ISSUE-06 OPEN ID/settings migration: see DEC-04. need marker-file ownership, never move folder.
-ISSUE-07 OPEN installer: no rollback; leftover prepared state blocks rerun; after uninstall can't reinstall (stateRoot remains); no update/repair path. plan: single script with install/update/repair/uninstall/diagnose + backup+hash verify+rollback.
+ISSUE-07 IN-PROGRESS(L08 diagnose done) installer: no rollback; leftover prepared state blocks rerun; after uninstall can't reinstall (stateRoot remains); no update/repair path. plan: single script with install/update/repair/uninstall/diagnose + backup+hash verify+rollback.
 ISSUE-08 OPEN React DevTools coexistence: install refuses if folder exists (good) but after install real React DevTools never downloads; REACT_PROFILE is user-global (affects other Electron/React apps). document + diagnose.
 ISSUE-09 OPEN developer_settings.json requirement unverified (ENV-VM lacks it → current installer refuses). verify whether loading works without dev mode.
 ISSUE-10 PARTIAL(L07: sidebar label+dialog reflect MAIN status, [AI_SIM]; installer version check still OPEN) UI showed only enabled/disabled label; MAIN status (unsupported/send-unavailable) invisible. compat detection: runtime only; installer has no Claude-version check (plan: warn on untested version, don't block).
@@ -85,6 +88,7 @@ ISSUE-12 PARTIAL integration test added (L04, extended L07) (test-integration.cj
 ISSUE-13 OPEN repo hygiene: README describes old plan (src/, macOS Cmd+Enter, browser support) ≠ implementation; duplicate docs/00_work_hikitsugi; empty docs/01_shijisho; CONTRIBUTING mentions src/manifest.json; PRIVACY permissions table TODO.
 ISSUE-14 OPEN LICENSE file = MIT (Copyright 2026 zawa356) from user's initial commit 784476a, but handoff says license undecided → ask user before relying on it.
 ISSUE-15 OPEN newline on key repeat suppressed (holding Enter gives 1 newline) — minor UX diff.
+ISSUE-17 OPEN downloaded ZIP carries Mark-of-the-Web → SmartScreen/SAC may block or prompt .bat/.ps1; untested. test with a real downloaded ZIP at release stage; document Unblock / "詳細情報→実行".
 ISSUE-16 OPEN real-machine verification of ISSUE-01 fix requires install on ENV-VM (needs installer work or one-off manual install with checkpoint).
 
 ## 7. FILE MAP
@@ -101,10 +105,11 @@ L04 2026-10-09 user checkpoint taken. installed Node 24.20.0 (winget). added pac
 L05 2026-10-09 ISSUE-01 fix in main-probe.js (sendButtonFor, DEC-05). tests updated: test-keyboard mock gives editor.parentElement composer; new ambiguous-editor case; test-integration adds #other editor. verified new code PASS, old code FAIL on new assertions. CHANGELOG Unreleased updated. manifest version NOT bumped (still 0.2.0). committed c6a4977 (user approved 2026-10-09).
 L06 2026-10-09 user rule: create docs/AISTATE (this file, chose .md ext), AGENTS.md updated with maintenance protocol.
 L07 2026-10-09 badge.js: ISSUE-10 status label (MutationObserver on data-claude-enter-probe-main; labels 読込中/無効/有効/非対応/送信不可/改行不可; red .warn; dialog .status explanation) + ISSUE-05 storage robustness (canStore guard → no crash, save disabled; corrupted stored → message; onChanged removal → defaults; external change while dialog open → refill + notice; storageError cleared on successful save/change). test-integration extended (status labels, unsupported, external change, remove, corrupted, no-storage context). verified: new PASS, old badge.js FAIL (label stayed 有効). CHANGELOG Changed/Fixed. NOTE: unsupported state still swallows assigned keys (deliberate, prototype behavior; label tells user to disable). README still old scaffold (ISSUE-13) so not updated.
+L08 2026-10-09 committed L07 as eacadf4 (user OK). user preference → DEC-07 (simple bat/ps1). read ENV-VM security state. added scripts/claude-keys.ps1 (-Action diagnose only; read-only: PS ver, Appx Claude ver vs TestedVersions, userData, developer_settings.json, target folder owner none/ours(marker)/legacy-probe(manifest name)/react-devtools/unknown, REACT_PROFILE User/Machine via registry raw, legacy state.json, claude process count; exit 1 if NG) + diagnose.bat. ran on ENV-VM via bat: all OK/INFO, exit 0 [AI_SIM-ish: real run, read-only]. Japanese table misaligned → switched to per-line colored output. .gitattributes/.editorconfig rules for bat/ps1.
 
 ## 9. NEXT (proposed order; user picks)
 N1 DONE (c6a4977 fix, 83c9fa9 docs).
-N2 DONE in worktree (L07); commit pending user OK.
+N2 DONE eacadf4.
 N3 ISSUE-04 / ISSUE-02 / ISSUE-03 key-logic design (needs real-machine observation; one step at a time).
-N4 ISSUE-07/08/09 unified installer (diagnose first), trial on ENV-VM with checkpoint → enables ISSUE-16 real check.
+N4 ISSUE-07/08/09 unified installer (diagnose DONE L08; next: install action w/ backup+rollback, then uninstall/update), trial on ENV-VM with checkpoint → enables ISSUE-16 real check.
 N5 ISSUE-13/14 repo/README/license cleanup with user decisions.

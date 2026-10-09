@@ -8,3 +8,8 @@
 *.webp binary
 *.zip binary
 *.crx binary
+
+# Windows scripts: cmd.exe needs CRLF; PowerShell 5.1 needs a BOM for non-ASCII text (see .editorconfig)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
