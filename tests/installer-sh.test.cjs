@@ -126,3 +126,8 @@ write(path.join(p.root, 'opt', 'Claude', 'resources', 'app.asar'), 'xx process.e
 check(run(p, 'install'), 0);
 
 console.log('PASS (sh): install/uninstall via loader, 0.3.x migration (env file handed over), pre-set env in ~/.profile, rollback during migration, refusals (React DevTools, foreign env, system env, no userData), app.asar loader check');
+
+// The explicit installation path is forwarded, rather than silently ignored.
+p = sandbox();
+check(run(p, 'install', ['--claude-path', toBash(path.join(p.root, 'missing'))]), 1);
+assert.ok(!exists(p.target));

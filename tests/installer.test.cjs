@@ -182,11 +182,12 @@ check(run(p, 'install'), 1); assert.equal(userEnv(p), '0'); assert.ok(!exists(p.
 p = sandbox(); setEnv(p, 'Machine', '1');
 check(run(p, 'install'), 1); assert.ok(!exists(p.target));
 
-// 10. User changed REACT_PROFILE after install: uninstall leaves the new value alone.
+// 10. User changed REACT_PROFILE after install: preflight refuses without touching files or the new value.
 p = sandbox();
 check(run(p, 'install'), 0);
 setEnv(p, 'User', '2');
-check(run(p, 'uninstall'), 0);
+check(run(p, 'uninstall'), 1);
+assert.ok(exists(p.target));
 assert.equal(userEnv(p), '2');
 
 // 11. MSIX virtualized userData: a folder for the same ID there blocks install.
@@ -199,3 +200,12 @@ assert.ok(!exists(p.target), 'must not install when a virtualized copy could sha
 assert.equal(userEnv(p), null);
 
 console.log('PASS: install/update/uninstall via loader, 0.3.x and 0.2.0 migration (env adopted or left), coexistence with another loader tool, rollback during migration, refusals (React DevTools, foreign env, machine env, virtualized copy), env changed after install');
+
+// A nonstandard path is forwarded to the shared loader, including errors.
+p = sandbox();
+check(run(p, 'install', ['-ClaudePath', path.join(p.root, 'missing.exe')]), 1);
+assert.ok(!exists(p.target));
+const customDir = path.join(p.root, 'custom Claude');
+fs.mkdirSync(customDir);
+fs.writeFileSync(path.join(customDir, 'claude.exe'), 'fixture');
+check(run(p, 'install', ['-ClaudePath', customDir]), 0);

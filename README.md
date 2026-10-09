@@ -157,3 +157,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   
 [MIT License](LICENSE)
 
 「Claude」は Anthropic の商標です。このプロジェクトは Anthropic とは関係ありません。
+
+### インストール先の検出（開発版）
+
+共通ローダーはMSIX登録情報、起動中のClaude、従来版のレジストリ登録と標準配置先を確認します。
+複数候補があり対象を決められない場合は、例として `diagnose.bat -ClaudePath "D:\Apps\Claude\claude.exe"`
+で対象を指定できます。導入・解除にも同じ指定が可能です。Linuxは `--claude-path` を使います。
+本体の検出と、そのビルドでの拡張動作確認は別です。従来版の実機動作は未確認です。
+MSIXの仮想化されたデータフォルダーだけがある環境でも導入できます。拡張の配置先は従来のパスを維持します。
+独自のユーザーデータフォルダーへの切り替えは行いません。

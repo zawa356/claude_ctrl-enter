@@ -16,6 +16,7 @@ param(
     [ValidateSet('diagnose', 'install', 'uninstall')]
     [string]$Action = 'diagnose',
     [switch]$Yes,
+    [string]$ClaudePath,
     [string]$Sandbox,
     [string]$FailAt
 )
@@ -92,6 +93,7 @@ function Write-State([string]$Status, [string]$MigratedFrom) {
 function Invoke-Loader([string]$LoaderAction, [bool]$AdoptEnv = $false) {
     $params = @{ Action = $LoaderAction; Config = $Config }
     if ($Yes) { $params.Yes = $true }
+    if ($ClaudePath) { $params.ClaudePath = $ClaudePath }
     if ($AdoptEnv) { $params.AdoptEnv = $true }
     if ($Sandbox) { $params.Sandbox = $Sandbox }
     if ($FailAt) { $params.FailAt = $FailAt }

@@ -155,3 +155,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   
 [MIT License](LICENSE)
 
 "Claude" is a trademark of Anthropic. This project is not affiliated with Anthropic.
+
+### Installation discovery (development version)
+
+The shared loader checks MSIX registration, running Claude processes, classic installer
+registry entries and standard locations. For an ambiguous or nonstandard installation,
+use `diagnose.bat -ClaudePath "D:\Apps\Claude\claude.exe"`; install/uninstall accept the
+same option. Linux uses `--claude-path`. Discovery does not verify runtime compatibility;
+classic Windows builds remain unverified. An existing MSIX virtual user-data directory
+now allows installation even when the normal roaming directory is absent. The extension
+slot path stays stable; custom user-data profiles are not relocated.

@@ -13,12 +13,13 @@
 #   --sandbox DIR / --fail-at STEP   テスト専用。ローダーにそのまま渡す
 set -u
 
-ACTION=diagnose; YES=0; SANDBOX=''; FAIL_AT=''
+ACTION=diagnose; YES=0; SANDBOX=''; FAIL_AT=''; CLAUDE_PATH=''
 while [ $# -gt 0 ]; do
     case "$1" in
         diagnose|install|uninstall) ACTION=$1 ;;
         --yes|-y) YES=1 ;;
         --sandbox) SANDBOX=$2; shift ;;
+        --claude-path) CLAUDE_PATH=$2; shift ;;
         --fail-at) FAIL_AT=$2; shift ;;
         *) echo "不明な引数: $1" >&2; exit 64 ;;
     esac
@@ -80,6 +81,7 @@ write_state() { # status migratedFrom
 loader() { # action [extra args...]
     local args=("$1" --config "$CONFIG_JSON"); shift
     [ "$YES" = 1 ] && args+=(--yes)
+    [ -n "$CLAUDE_PATH" ] && args+=(--claude-path "$CLAUDE_PATH")
     [ -n "$SANDBOX" ] && args+=(--sandbox "$SANDBOX")
     [ -n "$FAIL_AT" ] && args+=(--fail-at "$FAIL_AT")
     bash "$LOADER" "${args[@]}" "$@"
