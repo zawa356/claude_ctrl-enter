@@ -40,7 +40,12 @@ const storageMock = () => {
   window.chrome = window.chrome || {};
   window.chrome.storage = {
     local: {
-      get: async key => ({ [key]: JSON.parse(localStorage.getItem(key) || 'null') }),
+      get: async key => (localStorage.getItem(key) === null ? {} : { [key]: JSON.parse(localStorage.getItem(key)) }),
+      remove: async key => {
+        const oldValue = JSON.parse(localStorage.getItem(key) || 'null');
+        localStorage.removeItem(key);
+        for (const fn of listeners) fn({ [key]: { oldValue } }, 'local');
+      },
       set: async value => {
         if (window.__failNextSet) { window.__failNextSet = false; throw new Error('mock failure'); }
         for (const [key, v] of Object.entries(value)) {
@@ -83,6 +88,7 @@ const storageMock = () => {
       await page.getByRole('button', { name: '保存', exact: true }).click();
     };
     const dialogOpen = () => page.locator('dialog').evaluate(el => el.open);
+    const label = () => page.locator('#claude-enter-settings-entry .state').textContent();
 
     // Defaults: Enter -> newline, Ctrl+Enter -> click send, Claude's own handler never runs.
     await load();
@@ -92,7 +98,19 @@ const storageMock = () => {
     // Ctrl+Enter in another editor must not press the main composer's send button.
     assert.deepEqual(await press('Control+Enter', '#other'), []);
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-claude-enter-probe-main')), 'send-unavailable');
+    assert.equal(await label(), '送信不可', 'sidebar must surface the main-world problem');
     assert.deepEqual(await press('Enter', '#other'), ['other-newline']);
+    assert.equal(await label(), '有効');
+    // Missing editor API: keys do nothing and the sidebar says so instead of "有効".
+    await page.evaluate(() => { window.__hb = editor.editor.commands.setHardBreak; delete editor.editor.commands.setHardBreak; });
+    assert.deepEqual(await press('Enter'), []);
+    assert.equal(await label(), '非対応');
+    await page.getByRole('button', { name: /キー設定/ }).click();
+    await page.getByText('入力欄の仕様が想定と違うため').waitFor();
+    await page.getByRole('button', { name: '閉じる', exact: true }).click();
+    await page.evaluate(() => { editor.editor.commands.setHardBreak = window.__hb; });
+    assert.deepEqual(await press('Enter'), ['newline']);
+    assert.equal(await label(), '有効');
 
     // Disable from the UI: Claude's default behavior comes back immediately.
     await save({ enabled: false, send: 'Ctrl+Enter', newline: 'Enter' });
@@ -117,6 +135,45 @@ const storageMock = () => {
     await page.getByRole('button', { name: '閉じる', exact: true }).click();
     assert.deepEqual(await press('Enter'), ['click-send']);
 
-    console.log('PASS: UI<->key bridge, send scoped to its editor, disable/enable, remap, unassigned swallow, reload restore, save failure');
+    // A change made elsewhere while the dialog is open refreshes the form and the key handler.
+    await page.getByRole('button', { name: /キー設定/ }).click();
+    await page.evaluate(() => chrome.storage.local.set({ claudeEnterSettingsV1: { enabled: false, send: 'Ctrl+Enter', newline: 'Enter' } }));
+    await page.getByText('別の画面で設定が変更されたため、表示を更新しました。').waitFor();
+    assert.equal(await page.getByLabel('キー設定を有効にする').isChecked(), false);
+    await page.getByRole('button', { name: '閉じる', exact: true }).click();
+    assert.equal(await label(), '無効');
+    assert.deepEqual(await press('Enter'), ['app-send']);
+
+    // Removing the stored value returns to defaults.
+    await page.evaluate(() => chrome.storage.local.remove('claudeEnterSettingsV1'));
+    assert.equal(await label(), '有効');
+    assert.deepEqual(await press('Enter'), ['newline']);
+
+    // Corrupted stored value: defaults apply and the dialog explains why.
+    await page.evaluate(() => localStorage.setItem('claudeEnterSettingsV1', JSON.stringify({ enabled: 'yes', send: 'X' })));
+    await load();
+    assert.deepEqual(await press('Enter'), ['newline']);
+    await page.getByRole('button', { name: /キー設定/ }).click();
+    await page.getByText('保存済み設定が壊れていたため').waitFor();
+    await page.getByRole('button', { name: '閉じる', exact: true }).click();
+
+    // No chrome.storage at all: UI still mounts, keys run on defaults, saving is disabled.
+    const bare = await browser.newContext();
+    await bare.route('**/*', route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: fixture }));
+    const barePage = await bare.newPage();
+    await barePage.goto('https://claude.ai/new');
+    await barePage.evaluate(() => { if (window.chrome) delete window.chrome.storage; });
+    await barePage.addScriptTag({ content: read('main-probe.js') });
+    await barePage.addScriptTag({ content: read('badge.js') });
+    await barePage.getByRole('button', { name: /キー設定/ }).click();
+    await barePage.getByText('設定の保存機能を使えません').waitFor();
+    assert.equal(await barePage.getByRole('button', { name: '保存', exact: true }).isDisabled(), true);
+    await barePage.getByRole('button', { name: '閉じる', exact: true }).click();
+    await barePage.locator('#editor').focus();
+    await barePage.keyboard.press('Enter');
+    assert.deepEqual(await barePage.evaluate(() => window.log), ['newline']);
+    await bare.close();
+
+    console.log('PASS: UI<->key bridge, send scoped to its editor, status label (send-unavailable/unsupported), disable/enable, remap, unassigned swallow, reload restore, save failure, external change while open, removal->defaults, corrupted value, no storage API');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

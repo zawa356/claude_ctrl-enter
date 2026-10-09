@@ -74,14 +74,14 @@ ISSUE-01 FIXED(repo, [AI_SIM] only; [USER_REAL] pending) send button was global 
 ISSUE-02 OPEN unassigned multi-modifier Enter (Ctrl+Shift, Ctrl+Alt, Meta) passes to Claude [AI_SIM]; unknown if Claude sends on them. need real check or swallow all non-assigned Enter combos except Shift/Alt?
 ISSUE-03 OPEN Enter in slash-command/mention suggestion menus is intercepted as newline [GUESS from code]; need detect open menu → defer to Claude.
 ISSUE-04 OPEN before settings load MAIN uses defaults(enabled) [AI_SIM]; before document_idle no patch at all (Claude default Enter=send). options: run_at document_start; safe pending state.
-ISSUE-05 OPEN badge.js: chrome.storage missing → sync TypeError at get() → no UI (badge.js:~73). corrupted stored value silently → defaults. onChanged with removed value ignored. dialog open + external change → stale form overwrites.
+ISSUE-05 FIXED(L07, [AI_SIM]) badge.js: chrome.storage missing → sync TypeError at get() → no UI (badge.js:~73). corrupted stored value silently → defaults. onChanged with removed value ignored. dialog open + external change → stale form overwrites.
 ISSUE-06 OPEN ID/settings migration: see DEC-04. need marker-file ownership, never move folder.
 ISSUE-07 OPEN installer: no rollback; leftover prepared state blocks rerun; after uninstall can't reinstall (stateRoot remains); no update/repair path. plan: single script with install/update/repair/uninstall/diagnose + backup+hash verify+rollback.
 ISSUE-08 OPEN React DevTools coexistence: install refuses if folder exists (good) but after install real React DevTools never downloads; REACT_PROFILE is user-global (affects other Electron/React apps). document + diagnose.
 ISSUE-09 OPEN developer_settings.json requirement unverified (ENV-VM lacks it → current installer refuses). verify whether loading works without dev mode.
-ISSUE-10 OPEN UI shows only enabled/disabled label; MAIN status (unsupported/send-unavailable) invisible. compat detection: runtime only; installer has no Claude-version check (plan: warn on untested version, don't block).
+ISSUE-10 PARTIAL(L07: sidebar label+dialog reflect MAIN status, [AI_SIM]; installer version check still OPEN) UI showed only enabled/disabled label; MAIN status (unsupported/send-unavailable) invisible. compat detection: runtime only; installer has no Claude-version check (plan: warn on untested version, don't block).
 ISSUE-11 OPEN sidebar remount judged by host.isConnected only; multiple sidebars/rail/overlay unverified; rail (<160px) hides entry → settings unreachable.
-ISSUE-12 PARTIAL integration test added (test-integration.cjs) but runs both scripts in page world (not MAIN/isolated split), mock editor, no real IME.
+ISSUE-12 PARTIAL integration test added (L04, extended L07) (test-integration.cjs) but runs both scripts in page world (not MAIN/isolated split), mock editor, no real IME.
 ISSUE-13 OPEN repo hygiene: README describes old plan (src/, macOS Cmd+Enter, browser support) ≠ implementation; duplicate docs/00_work_hikitsugi; empty docs/01_shijisho; CONTRIBUTING mentions src/manifest.json; PRIVACY permissions table TODO.
 ISSUE-14 OPEN LICENSE file = MIT (Copyright 2026 zawa356) from user's initial commit 784476a, but handoff says license undecided → ask user before relying on it.
 ISSUE-15 OPEN newline on key repeat suppressed (holding Enter gives 1 newline) — minor UX diff.
@@ -98,12 +98,13 @@ L01 2026-10-08 [HANDOFF] ChatGPT/Codex built 0.0.1 load probe → 0.1.0 keys →
 L02 2026-10-09 user commits: 784476a scaffold (README/LICENSE MIT/CHANGELOG/CONTRIBUTING/PRIVACY/.gitignore/.editorconfig/.gitattributes), 2ef8bf8 handoff doc copy, 678dc05 "firest" (handoff files incl. extension 0.2.0, scripts, tests).
 L03 2026-10-09 Claude Code session start on ENV-VM. read all files; hash check (extension OK); test-keyboard PASS via VS Code electron-as-node; discovered ENV-VM has no install (≠ENV-ORIG). produced review → ISSUE-01..16. user confirmed ENV-VM is separate Hyper-V VM with checkpoints.
 L04 2026-10-09 user checkpoint taken. installed Node 24.20.0 (winget). added package.json (scripts test/test:keyboard/test:ui), playwright 1.64.0 exact, package-lock.json, test-integration.cjs, charset fix in test-settings-ui fixture, .gitignore settings-preview.png. all PASS. commit 9d4c530 (user approved).
-L05 2026-10-09 ISSUE-01 fix in main-probe.js (sendButtonFor, DEC-05). tests updated: test-keyboard mock gives editor.parentElement composer; new ambiguous-editor case; test-integration adds #other editor. verified new code PASS, old code FAIL on new assertions. CHANGELOG Unreleased updated. manifest version NOT bumped (still 0.2.0). commit pending user approval at time of writing.
+L05 2026-10-09 ISSUE-01 fix in main-probe.js (sendButtonFor, DEC-05). tests updated: test-keyboard mock gives editor.parentElement composer; new ambiguous-editor case; test-integration adds #other editor. verified new code PASS, old code FAIL on new assertions. CHANGELOG Unreleased updated. manifest version NOT bumped (still 0.2.0). committed c6a4977 (user approved 2026-10-09).
 L06 2026-10-09 user rule: create docs/AISTATE (this file, chose .md ext), AGENTS.md updated with maintenance protocol.
+L07 2026-10-09 badge.js: ISSUE-10 status label (MutationObserver on data-claude-enter-probe-main; labels 読込中/無効/有効/非対応/送信不可/改行不可; red .warn; dialog .status explanation) + ISSUE-05 storage robustness (canStore guard → no crash, save disabled; corrupted stored → message; onChanged removal → defaults; external change while dialog open → refill + notice; storageError cleared on successful save/change). test-integration extended (status labels, unsupported, external change, remove, corrupted, no-storage context). verified: new PASS, old badge.js FAIL (label stayed 有効). CHANGELOG Changed/Fixed. NOTE: unsupported state still swallows assigned keys (deliberate, prototype behavior; label tells user to disable). README still old scaffold (ISSUE-13) so not updated.
 
 ## 9. NEXT (proposed order; user picks)
-N1 commit L05/L06 (needs user OK).
-N2 ISSUE-10 status display in sidebar + ISSUE-05 storage robustness (dev files only).
+N1 DONE (c6a4977 fix, 83c9fa9 docs).
+N2 DONE in worktree (L07); commit pending user OK.
 N3 ISSUE-04 / ISSUE-02 / ISSUE-03 key-logic design (needs real-machine observation; one step at a time).
 N4 ISSUE-07/08/09 unified installer (diagnose first), trial on ENV-VM with checkpoint → enables ISSUE-16 real check.
 N5 ISSUE-13/14 repo/README/license cleanup with user decisions.
