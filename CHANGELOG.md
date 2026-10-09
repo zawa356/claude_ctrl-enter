@@ -12,6 +12,12 @@
 
 - リポジトリの初期構成（README, .gitignore など）
 - テスト環境（package.json、Playwright）と、設定UIとキー処理の連携テスト
+- bat + ps1 だけで完結する導入・更新・解除・診断（`install.bat` / `uninstall.bat` / `diagnose.bat`、`scripts/claude-keys.ps1`）。
+  - 管理者権限・外部ダウンロード・実行ポリシーの恒久変更なし。
+  - 導入前に診断し、本物の React DevTools や別用途の `REACT_PROFILE` があれば何も変更せず中止。
+  - 途中で失敗した場合は元の状態に戻す。更新・解除時の旧ファイルは削除せずバックアップへ移す。
+  - 試作版 0.2.0 からの更新に対応（拡張フォルダーの場所を変えないため、保存済みのキー設定は引き継がれる見込み。実機未確認）。
+  - 試作版と違い、`developer_settings.json`（開発者モード）を必須にしない（必要かどうかは実機未確認）。
 
 ### Changed
 

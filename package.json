@@ -7,7 +7,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "npm run test:keyboard && npm run test:ui",
+    "test": "npm run test:keyboard && npm run test:installer && npm run test:ui",
+    "test:installer": "node test-installer.cjs",
     "test:keyboard": "node test-keyboard.cjs",
     "test:ui": "node test-settings-ui.cjs && node test-integration.cjs"
   },
