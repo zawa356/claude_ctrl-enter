@@ -1,3 +1,5 @@
+> **履歴資料：** 2026-10-09 に VS Code 上の AI へ最初に渡した依頼文です。現在の状態と次の作業は [AISTATE.md](AISTATE.md) を参照してください。
+
 このフォルダーのClaude Desktopキーバインド拡張を、VS Codeで継続開発してください。
 
 最初にAGENTS.mdとdocs/AI_HANDOFF_JA.mdを通読し、extension配下・導入解除スクリプト・テストを確認してください。引き継ぎ時点の実機確認済み試作は0.2.0です。通常のMSIXアイコンから起動し、Enter改行・Ctrl+Enter送信・IME保護・サイドバー設定・設定保存と再起動後の復元まで動いています。

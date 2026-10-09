@@ -1,3 +1,5 @@
+> **Historical snapshot (prototype 0.2.0 README, 2026-10-08).** Superseded by the root [README](../README.md); kept for reference. Files it mentions now live in `legacy/`.
+
 # Claude Enter: experimental keyboard extension
 
 Experimental, tested-build target: Windows MSIX Claude 2.26454.2.

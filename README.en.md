@@ -128,7 +128,7 @@ Make sure Claude was *fully* quit. Closing the window may leave it running in th
 
 ```powershell
 npm install        # fetches Playwright for tests (uses the Edge installed with Windows)
-npm test           # key handling, installer, settings UI and integration tests
+npm test           # key handling, installers (Windows / Linux), settings UI and integration tests. The Linux installer test uses Git Bash (skipped if missing)
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   # builds the release ZIP in dist\
 ```
 

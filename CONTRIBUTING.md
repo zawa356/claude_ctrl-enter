@@ -4,6 +4,7 @@
 
 - Windows 10 / 11、Windows PowerShell 5.1
 - Node.js 20 以上（テスト用）。`npm install` で Playwright を取得します。ブラウザーは Windows 標準の Microsoft Edge を使います。
+- Git for Windows（Git Bash）。Linux 版スクリプトのテストに使います（無い場合はスキップ）。Linux 版の変更は `scripts/claude-keys.ps1` と挙動をそろえてください。
 - エディターは `.editorconfig` 対応のものを推奨します。
   - `*.ps1` は **UTF-8（BOM付き）・CRLF**。BOM が無いと PowerShell 5.1 で日本語が化けます。
   - `*.bat` は CRLF。
@@ -20,7 +21,7 @@
 ## 守ること
 
 - Claude 本体（`claude.exe`、`app.asar`、`C:\Program Files\WindowsApps` 配下）や署名・権限を変更しないこと。
-- インストーラーは bat と ps1 だけで完結させること。exe 化、コード署名の必須化、外部からのダウンロード、管理者権限、実行ポリシーの恒久変更は行わないこと。
+- インストーラーは bat + ps1（Windows）と bash（Linux）だけで完結させること。exe 化、コード署名の必須化、外部からのダウンロード、管理者権限、実行ポリシーの恒久変更は行わないこと。
 - 拡張の導入先フォルダー（`extensions\fmkadmapgofadopljbjfkapdkoienihi`）を変えないこと。拡張 ID はこのフォルダーのパスから計算されるため、変えると利用者の設定が失われます。`manifest.json` に `key` を追加することも同じ理由で禁止です。
 - 権限は最小限に。外部通信やリモートコードの読み込みはしないこと。データの扱いを変える場合は [PRIVACY.md](PRIVACY.md) も更新すること。
 - キー処理では、IME 変換中の Enter と、誤送信につながる動作に特に注意すること。判断に迷う場合は「送信しない」側に倒すこと。
@@ -41,6 +42,6 @@
 
 ## English summary
 
-Requirements: Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`). Keep `*.ps1` as UTF-8 with BOM and CRLF.
-Never modify Claude's own files, never change the extension install folder or add a manifest `key` (it would change the extension ID and lose users' settings), keep the installer as plain .bat + .ps1, and when in doubt make key handling *not* send.
+Requirements: Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`), Git Bash for the Linux installer test. Keep `*.ps1` as UTF-8 with BOM and CRLF, and keep `scripts/claude-keys.sh` behaving like `scripts/claude-keys.ps1`.
+Never modify Claude's own files, never change the extension install folder or add a manifest `key` (it would change the extension ID and lose users' settings), keep the installers as plain .bat + .ps1 (Windows) and bash (Linux), and when in doubt make key handling *not* send.
 Release: bump versions in `extension/manifest.json` and `package.json`, date the CHANGELOG section, then push a `vX.Y.Z` tag; CI builds the ZIP and attaches it to the GitHub Release.

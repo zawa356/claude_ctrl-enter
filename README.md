@@ -126,7 +126,7 @@ Claude を「完全に」終了したか確認してください。ウィンド�
 
 ```powershell
 npm install        # テスト用の Playwright を取得（ブラウザーは Windows 標準の Edge を使用）
-npm test           # キー処理・インストーラー・設定画面・連携のテスト
+npm test           # キー処理・インストーラー（Windows / Linux）・設定画面・連携のテスト。Linux 用は Git Bash で実行（無ければスキップ）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   # dist\ に配布用 ZIP を作成
 ```
 

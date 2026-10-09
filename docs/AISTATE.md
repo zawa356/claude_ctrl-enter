@@ -1,116 +1,143 @@
 <!--
 AISTATE: machine-oriented knowledge store for AI agents. NOT for humans. Density > readability.
 RULES FOR THIS FILE:
-- Read fully at session start, before AI_HANDOFF_JA.md and code.
+- Read fully at session start (after AGENTS.md), before AI_HANDOFF_JA.md and code.
 - Update in the same work unit as any code/doc/env change (before or with the commit).
-- LOG is append-only (newest last). Never delete history; mark superseded facts with [SUPERSEDED by Lnn/date] instead.
-- Keep every fact tagged with evidence: [USER_REAL]=user verified on real Claude, [AI_SIM]=AI mock/headless test,
+- Sections 0-7 and 9 = CURRENT STATE (rewrite freely, keep facts). Section 8 LOG = append-only history (newest last); never delete; correct via a new line.
+- Tag facts with evidence: [USER_REAL]=user verified on real Claude, [AI_SIM]=AI mock/headless/sandbox test,
   [AI_READ]=AI read code/files/registry read-only, [HANDOFF]=claimed by ChatGPT-era handoff (not re-verified), [GUESS]=unverified inference.
-- IDs: ISSUE-nn (open problems), DEC-nn (decisions), ENV-xx (machines). Reuse IDs; never renumber.
-- Language: mixed JA/EN ok. Paths repo-relative unless absolute needed.
+- IDs: ISSUE-nn, DEC-nn, ENV-xx, Lnn, Nn. Never renumber; new items get the next number.
+- NEVER write the user's real name (even partially / inside an email). Say "real-name". GitHub identity = zawa356.
+- Editing this file from Git Bash: sed replacement strings must not contain "\U", "\L", "\r" sequences (sed interprets them; L21/TOOLING lines were once garbled this way). Prefer the Edit tool.
 -->
 
-# AISTATE v1
+# AISTATE v2 (rewritten 2026-10-09 L34; history in §8)
 
 ## 0. QUICK
-project=Claude Desktop (Windows MSIX) key-binding extension: Enter=newline, Ctrl+Enter=send, IME-safe, sidebar settings UI.
-goal=GitHub公開 (zawa356/claude_ctrl-enter, currently PRIVATE) + 一般ユーザーが簡単に導入/更新/解除. license MIT holder zawa356 (DEC-11).
-current_ext_version=0.3.0 "Claude Ctrl+Enter" (DEC-13 layout). installer: install.bat/uninstall.bat/diagnose.bat → scripts/claude-keys.ps1. release: scripts/build-release.ps1 / CI tag v*. tested Claude 2.26454.2.0, 2.31226.0.0.
-start_here: AGENTS.md(rules) → this file → docs/AI_HANDOFF_JA.md(deep background, 2026-10-08 snapshot) → extension/*.
-test: `npm test` (PowerShell; see TOOLING). all 3 suites must PASS before commit.
-user_lang=Japanese (always reply JA). user dislikes multi-step instructions: ask ONE real-machine action at a time.
+project=Claude Ctrl+Enter: unofficial Claude Desktop key-binding extension. Enter=newline, Ctrl+Enter=send (configurable among Enter/Ctrl+Enter/Shift+Enter/Alt+Enter), IME-safe, settings UI in Claude's left sidebar.
+repo=https://github.com/zawa356/claude_ctrl-enter PUBLIC (since L32). license MIT, holder zawa356 (DEC-11). branch main only, no open PRs (L35).
+release=v0.3.0 Latest (L32/L33): https://github.com/zawa356/claude_ctrl-enter/releases/tag/v0.3.0 ; asset claude-ctrl-enter-0.3.0.zip sha256 d94fed3d93b62c3cddcf908030ec365a1280d9970a3a1d1bb8355d9bdf9d933e + SHA256SUMS.txt.
+platforms=Windows (verified [USER_REAL] on Claude MSIX 2.26454.2.0 and 2.31226.0.0) + Linux (Claude Desktop beta; scripts [AI_SIM] only, ISSUE-23). macOS not supported (no test machine).
+start_here: AGENTS.md (rules) → this file → docs/AI_HANDOFF_JA.md (frozen ChatGPT-era background, 2026-10-08; its file names/paths are pre-L26) → code.
+test: `npm test` from PowerShell (see §3) = keyboard + installer(ps1) + installer(sh via Git Bash) + settings-ui + integration. all must PASS before commit. CI (.github/workflows/ci.yml) runs the same on windows-latest + a Linux subset on ubuntu-latest.
+user: replies ALWAYS in Japanese (corrected twice). state-changing real-machine ops one step at a time; simple observation checks may be bundled into one checklist; always warn when a real message will be sent.
 
 ## 1. HARD CONSTRAINTS (from user; non-negotiable)
-- no dedicated launcher / shortcut replacement; keep normal MSIX icon launch.
-- never modify WindowsApps ACL/owner, MSIX, signature, claude.exe, app.asar. fuses read-only only.
+- no dedicated launcher / shortcut replacement; keep normal app icon launch.
+- never modify WindowsApps ACL/owner, MSIX, signature, claude.exe, app.asar. read-only inspection of app.asar is OK (never copy it into the repo).
 - never auto-quit/kill/restart Claude. send tests: tell user a real message WILL be sent; user performs it.
-- never overwrite existing React DevTools folder / REACT_PROFILE / user files without consent; backup before updating an install.
-- don't lose existing users' extension ID / chrome.storage settings (see DEC-04).
-- don't commit: Claude binaries, asar copies, profiles, credentials, chat logs, user screenshots.
-- distinguish [AI_SIM] vs [USER_REAL]; never claim other-version/all-IME support by guess.
-- "Electron supports X" ≠ "this Claude build allows X" (Claude rejects remote-debugging args itself).
-- (L26) commit/push/gh allowed by user for this repo. still ASK before: force push, repo delete/recreate, visibility change, publishing a Release. [SUPERSEDES: earlier "push/publish NOT authorized"]
+- never overwrite an existing React DevTools folder / foreign REACT_PROFILE / user files; backup before updating an install.
+- never lose users' extension ID / chrome.storage settings: keep install folder path forever, never add manifest "key" (DEC-04).
+- installer = plain .bat/.ps1 (Windows) and bash (Linux) only: no exe/MSI/signing, no downloads, no admin/root, no permanent ExecutionPolicy change (DEC-07).
+- don't commit: Claude binaries/asar copies, profiles, credentials, chat logs, user screenshots, Claude config contents (e.g. extensions-blocklist.json has an org id URL).
+- distinguish [AI_SIM] vs [USER_REAL]; never claim other-version/all-IME/Linux support by guess.
+- "Electron supports X" ≠ "this Claude build allows X" (Claude itself rejects remote-debugging args).
+- git: commit/push/gh allowed for this repo (L26). ASK first before force push, repo delete/recreate, visibility change, publishing/editing a Release. Publishing actions may be denied to the AI by Claude Code auto-mode ("Create Public Surface", L32) → give the user the exact commands.
+- privacy: no real name anywhere (DEC-11, L31). C:\Users\zawa test paths are fine.
 
 ## 2. ENVIRONMENTS
-ENV-ORIG: ChatGPT-Work era PC. has 0.2.0 installed & running [USER_REAL]. state: %LOCALAPPDATA%\ClaudePatchLab\enter-probe-state\{state.json,uninstall-probe.ps1,backup-*}. NOT accessible from current sessions. do not re-run installer there.
-ENV-VM: current dev machine (VS Code + Claude Code). Hyper-V VM, user takes checkpoints → safe for install/uninstall trials (still ask first + ask user to checkpoint).
-  2026-10-09 baseline [AI_READ]: Claude MSIX 2.26454.2.0 installed; %APPDATA%\Claude exists (no extensions\, no developer_settings.json); REACT_PROFILE unset (User & Machine); no ClaudePatchLab dir; PS 5.1.26100; Edge present; winget 1.29.
-  user checkpoint "clean-before-node"-like taken 2026-10-09 before Node install (name chosen by user; I suggested clean-before-node).
-  Node v24.20.0 installed via winget 2026-10-09 (machine-wide MSI).
-  Claude AUTO-UPDATED during session 2026-10-09: 2.26454.2.0 → 2.31226.0.0 (InstallLocation ...\Claude_2.31226.0.0_x64__pzs8sxrjxfjjc). untested version per TestedVersions → diagnose WARN.
-  security [AI_READ 2026-10-09]: SAC VerifiedAndReputablePolicyState=2 (evaluation), Defender RTP on, ExecutionPolicy all Undefined (=Restricted default on client).
+ENV-ORIG: ChatGPT-Work era PC. prototype 0.2.0 installed & running [USER_REAL, HANDOFF]. legacy state %LOCALAPPDATA%\ClaudePatchLab\enter-probe-state\{state.json(hadValue=false,status=installed),uninstall-probe.ps1,backup-*}. NOT accessible from these sessions. update path = release ZIP install.bat (detects legacy-probe, keeps folder → settings carry over; rehearsed on ENV-VM L30). do not run legacy install-probe.ps1 there.
+ENV-VM: dev machine (VS Code + Claude Code), Hyper-V VM with user checkpoints (e.g. before Node install, "before-install"). Windows 11 Pro 26200, PS 5.1.26100, Edge, winget 1.29, Node 24.20.0 (winget, L04), Git for Windows (bash at C:\Program Files\Git\bin\bash.exe). no python, no WSL, no pwsh.
+  security [AI_READ]: SAC VerifiedAndReputablePolicyState=2 (evaluation, not enforce), Defender RTP on, ExecutionPolicy all Undefined.
+  Claude: auto-updated 2.26454.2.0 → 2.31226.0.0 during L10-L11 (InstallLocation C:\Program Files\WindowsApps\Claude_2.31226.0.0_x64__pzs8sxrjxfjjc, PFN Claude_pzs8sxrjxfjjc).
+  current state (L35): v0.3.0 installed from repo/ZIP, ENABLED, defaults; REACT_PROFILE=1 (User, set by us; state envSetByUs=true, migratedFromLegacy=true); developer mode ON (virtual developer_settings.json, user-enabled L15; real-path copy removed L30).
+  leftovers (harmless test artifacts): %LOCALAPPDATA%\ClaudePatchLab (legacy state from L30), %LOCALAPPDATA%\ClaudeKeys\backups\* , ~/Downloads/claude-ctrl-enter-0.3.0.zip + extracted folder (MOTW test L27).
+  MSIX virtualization [AI_READ L17]: most Claude userData lives in %LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude (config.json, Preferences, developer_settings.json, Local Extension Settings, IndexedDB...). real %APPDATA%\Claude also exists (Cache, Local Storage...). our ext in REAL %APPDATA%\Claude\extensions loads via merged view [USER_REAL].
 
 ## 3. TOOLING / GOTCHAS
-- Bash tool PATH lacks node; PowerShell tool needs PATH refresh after install:
-  `$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')`
-- fallback node: `ELECTRON_RUN_AS_NODE=1 "%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe" script.cjs` (Node 24 / Electron 43).
-- python NOT installed (store alias only). use node/PowerShell/Edit tool.
-- Git Bash `sed -i` STRIPS CR from CRLF files (msys text mode). after sed on *.ps1/*.bat re-add with `sed -i 's/$//'` (only if file has 0 CR) or use Edit tool. verify: `tr -cd '' < f | wc -c` == line count. BOM survives sed.
-- Playwright 1.64.0 (devDep, exact). uses channel 'msedge' (system Edge); browsers not downloaded (PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 at install).
-- SHA256SUMS.txt is CRLF → `tr -d '\r' < SHA256SUMS.txt | sha256sum -c -`. It is a 2026-10-08 handoff artifact; README.md/.gitignore entries mismatch (repo scaffold versions replaced handoff ones). extension/* matched at 2026-10-09 start. Will drift as code changes (expected).
-- line endings: .gitattributes `* text=auto eol=lf`; index LF. extension files in worktree were CRLF/mixed at handoff (functionally irrelevant).
-- test-settings-ui.cjs writes settings-preview.png to repo root (gitignored).
-- docs/00_work_hikitsugi == docs/AI_HANDOFF_JA.md byte-identical (user's import copy). docs/01_shijisho empty. src/.gitkeep unused scaffold.
+- Bash tool has no node on PATH → run node/npm via the PowerShell tool after refreshing PATH:
+  $env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')
+- fallback node: ELECTRON_RUN_AS_NODE=1 "%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe" script.cjs
+- python NOT installed (store alias only). use node / PowerShell / Edit tool.
+- Git Bash `sed -i` strips CR from CRLF files. after sed on *.ps1/*.bat: re-add CR with sed 's/\r\?$/\r/' (backslash-r) or use the Edit tool (preserves CRLF). verify CR count == LF count (e.g. PowerShell: count bytes 13 vs 10). BOM survives sed.
+- sed replacement text: "\U..." uppercases, "\L" lowercases (caused the garbled extension-ID line before L34). avoid Windows paths with backslashes in sed replacements.
+- encodings: *.ps1 UTF-8 BOM + CRLF (PS 5.1 garbles BOM-less JA), *.bat CRLF ASCII, *.sh LF, rest UTF-8 LF. enforced by .gitattributes + .editorconfig. sh files have git exec bit.
+- Windows PowerShell 5.1 started from pwsh 7 inherits pwsh PSModulePath → built-in cmdlets missing (ISSUE-24). claude-keys.ps1 resets PSModulePath; both ps1 use .NET SHA256 (Get-Sha256) not Get-FileHash.
+- Playwright 1.64.0 exact devDep, channel 'msedge' (system Edge), PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1. settings-ui test writes settings-preview.png to repo root (gitignored).
+- installer tests never touch the real registry/APPDATA: ps1 -Sandbox DIR (paths + REACT_PROFILE → env-<Scope>.json files) / sh --sandbox DIR (HOME,/etc,app.asar). -FailAt/--fail-at copy|swap|env|state for rollback tests. temp dirs cleaned on exit.
+- local release build: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1 [-AllowDirty] → dist\ (gitignored). requires clean git for release files and matching versions + CHANGELOG section.
+- CI release: push tag vX.Y.Z (must equal manifest version) → test, test-linux, release jobs → gh release create with CHANGELOG section as notes (title = tag). v0.3.0 title/notes were then edited manually (L33). ubuntu-latest moves to Ubuntu 26 from 2026-10-19.
+- read-only Claude DOM probing: user enables Claude developer mode (Help → Troubleshooting → Enable developer mode; Claude restarts), opens DevTools (Ctrl+Alt+I) on the claude.ai view, pastes snippet (may need "allow pasting"). prefer snapshot-on-Shift-keyup snippets over timers (L18). never capture message text.
 
-## 4. ARCHITECTURE (facts)
-load path [USER_REAL on ENV-ORIG]: user env REACT_PROFILE=1 → Claude main bundle (index.chunk-CJN9s-60.js) calls loadReactDevTools → if folder app.getPath('userData')/extensions/fmkadmapgofadopljbjfkapdkoienihi exists and !forceDownload → session.loadExtension(folder). our MV3 ext sits in that folder with own name. unofficial; may break on Claude update.
-userData on ENV-ORIG = %APPDATA%\Claude [HANDOFF]; same on ENV-VM [AI_READ]. not LocalCache\Roaming.
-manifest: MV3, name "Claude Enter Patch - Load Probe" (legacy uninstall-probe.ps1 ownership check depends on it; new script uses marker), matches https://claude.ai/* , run_at document_start (was document_idle until L24), all_frames false, permissions [storage].
-  main-probe.js world MAIN (needs el.editor = tiptap Editor on `.tiptap.ProseMirror[contenteditable=true]`).
-  badge.js isolated world (chrome.storage.local key `claudeEnterSettingsV1`, default {enabled:true,send:'Ctrl+Enter',newline:'Enter'}).
-bridge: badge → documentElement attr `data-claude-enter-settings` (JSON) + document event `claude-enter-settings-changed`; MAIN status → attr `data-claude-enter-probe-main` ∈ active|disabled|waiting|unsupported|send-unavailable|newline-unavailable. not a security boundary.
-key logic: window capture keydown. (L16) plain Enter while menuOpen(editor) → return untouched (Claude picks item); menuOpen = some plugin key /suggestion|mention/i with getState().active===true AND a visible [role=menu]/[role=listbox]; exceptions → false. IME: composing flag(WeakMap per editor)/isComposing/keyCode229/view.composing → stopImmediatePropagation only. 100ms after compositionend → swallow Enter. keys allowed: Enter,Ctrl+Enter,Shift+Enter,Alt+Enter. unassigned Enter & Ctrl+Enter swallowed; other combos pass through. newline=editor.commands.setHardBreak(); send=click send button `button[data-testid="chat-input-send"]` (not disabled/aria-disabled).
-UI: shadow host #claude-enter-settings-entry inserted tray.insertBefore(host,row) where row=profile.closest('.df-footer-row'), tray=.df-bottom-tray inside [data-testid=sidebar]; profile=button[data-testid=user-menu-button]. MutationObserver+rAF remount; ResizeObserver hides <160px. native <dialog>.showModal. right-bottom badge was REJECTED by user (overlaps model picker) — never reintroduce, never overlay composer.
-installer install-probe.ps1: requires %APPDATA%\Claude\developer_settings.json exists; refuses if target or stateRoot exists or REACT_PROFILE set; writes state.json(prepared) → copies → sets env → installed. uninstall-probe.ps1: state-driven, moves ext folder to stateRoot\removed-extension, restores env.
-extension ID [CONFIRMED L21 AI_READ+calc]: no manifest key → real ID = SHA256(UTF-16LE absolute folder path)[0..15] hex → each nibble mapped 0-f→a-p. ENV-VM: path C:SERSZAWAAPPDATAROAMINGCLAUDEEXTENSIONSMKADM... � AKLGDLHIKJBKJNFENJGIGHGBDDJNEPFE (MATCHES LOCAL EXTENSION SETTINGS DIR). CHROME.STORAGE (LOCAL EXTENSION SETTINGS/<REALID>) LIVES IN VIRTUAL USERDATA ON ENV-VM. ID DIFFERS PER USER PATH; STABLE WHILE PATH UNCHANGED; MANIFEST NAME IRRELEVANT; ADDING KEY OR MOVING FOLDER LOSES SETTINGS.
+## 4. ARCHITECTURE (current, v0.3.0)
+load path: user env REACT_PROFILE=1 → Claude main bundle (2.26454: index.chunk-CJN9s-60.js; 2.31226: loader chunk index.chunk-ZFT5Mc_X.js) calls loadReactDevTools → bundled electron-devtools-installer: if extension already loaded/folder exists and !forceDownload → session.loadExtension(userData/extensions/fmkadmapgofadopljbjfkapdkoienihi). our MV3 ext occupies that folder. unofficial; may break on Claude updates. developer mode NOT required [USER_REAL L12].
+extension/manifest.json: MV3, name "Claude Ctrl+Enter", version 0.3.0, matches https://claude.ai/* , run_at document_start, all_frames false, permissions [storage] only. no network code.
+  extension/keys.js (world MAIN; needs el.editor = tiptap Editor on .tiptap.ProseMirror[contenteditable=true]).
+  extension/settings-ui.js (isolated world; chrome.storage.local key claudeEnterSettingsV1 = {enabled:bool, send, newline}; default {true,'Ctrl+Enter','Enter'}).
+bridge (not a security boundary): settings-ui → documentElement attr data-claude-enter-settings (JSON) + document event claude-enter-settings-changed; keys.js status → attr data-claude-enter-probe-main ∈ active|disabled|waiting|unsupported|send-unavailable|newline-unavailable (internal names kept from prototype).
+keys.js logic (window capture keydown):
+  - not ready (settings not yet received) → defaults apply but send action swallowed; 3s fallback timer → ready (DEC-10).
+  - IME: composing flag (WeakMap per editor) / isComposing / keyCode 229 / view.composing → stopImmediatePropagation only (no preventDefault). Enter <100ms after compositionend → swallowed.
+  - plain Enter while menuOpen(editor) → untouched (Claude picks slash/mention item). menuOpen = plugin key /suggestion|mention/i with getState().active===true AND visible [role=menu]/[role=listbox]; exceptions → false (DEC-09).
+  - assigned key → preventDefault+stop; repeat ignored; newline = editor.commands.setHardBreak() (must return true); send = sendButtonFor(editor): nearest ancestor with ≥1 visible button[data-testid="chat-input-send"] must have exactly 1 and no other editor, button not disabled/aria-disabled → click (DEC-05). unsupported API → keys do nothing + status unsupported.
+  - unassigned Enter and Ctrl+Enter swallowed; other combos pass to Claude (Claude does nothing on Ctrl+Shift/Ctrl+Alt+Enter [USER_REAL L14]).
+settings-ui.js: shadow host #claude-enter-settings-entry inserted tray.insertBefore(host,row): profile=button[data-testid=user-menu-button], row=profile.closest('.df-footer-row'), tray=row.parentElement.df-bottom-tray inside [data-testid=sidebar]. MutationObserver+rAF remount; ResizeObserver hides <160px. native <dialog>.showModal with enabled checkbox + send/newline selects + 初期値/閉じる/保存. label 読込中/有効/無効/非対応/送信不可/改行不可 (red when problem). storage robustness: missing API → defaults + save disabled; corrupted → defaults + message; removal → defaults; external change while open → refill + notice. right-bottom badge REJECTED by user — never reintroduce; never overlay composer.
+extension ID [CONFIRMED L21]: no manifest key → Chromium unpacked ID = SHA256(UTF-16LE absolute folder path) first 16 bytes, hex nibbles 0-f mapped to a-p. ENV-VM: C:/Users/zawa/AppData/Roaming/Claude/extensions/fmkadmapgofadopljbjfkapdkoienihi → aklgdlhikjbkjnfenjgighgbddjnepfe (= Local Extension Settings dir name, stored in the VIRTUAL userData on ENV-VM). ID differs per user path, stable while the path is unchanged; manifest name irrelevant; adding key or moving the folder loses settings.
+Windows installer scripts/claude-keys.ps1 (-Action diagnose|install|uninstall, -Yes, test-only -Sandbox/-FailAt), wrappers install.bat/uninstall.bat/diagnose.bat (process-scope -ExecutionPolicy Bypass):
+  - paths: target %APPDATA%\Claude\extensions\<id>; state %LOCALAPPDATA%\ClaudeKeys\state.json {schema,status installed|removed,version,target,envSetByUs,previousEnv,installedAt,updatedAt,migratedFromLegacy}; backups %LOCALAPPDATA%\ClaudeKeys\backups\<stamp>\{previous|removed|failed}.
+  - diagnose: PS version; Appx Claude version vs $TestedVersions ('2.26454.2.0','2.31226.0.0') → WARN if untested; real userData must exist (else NG, ISSUE-22); virtual userData (Packages\<PFN>\LocalCache\Roaming\Claude) shown and its extensions\<id> → NG if present; developer_settings INFO (both paths, "不要"); owner of target: none|ours(marker claude-keys.owner.json)|legacy-probe(name "Claude Enter Patch - Load Probe")|react-devtools|unknown (last two NG); REACT_PROFILE Machine any → NG, User ≠1 → NG; legacy state INFO; claude process count INFO.
+  - install: NG → exit 1 untouched. stage .<id>.staging-<stamp> in extensions dir, copy + SHA256 verify, write marker; update moves old target → backups\<stamp>\previous; rename staging → target; set REACT_PROFILE=1 (User) only if not already "1"; write state. envSetByUs: fresh = env absent before; update = our state (ignored if status removed, L30) else legacy state (hadValue false & installed). any failure → restore env, move placed/staging → backups\<stamp>\failed, move previous back; exit 3 if rollback itself fails.
+  - uninstall: refuses foreign owner; moves target → backups\<stamp>\removed (never deletes); removes REACT_PROFILE only if envSetByUs and value still "1"; state status=removed; chrome.storage kept (reinstall restores settings).
+  - exit codes: 0 ok, 1 refused/rolled back, 2 user cancelled, 3 rollback failed.
+Linux installer scripts/claude-keys.sh (diagnose|install|uninstall, --yes, --sandbox, --fail-at), wrappers install.sh/uninstall.sh/diagnose.sh: same semantics; target ~/.config/Claude/extensions/<id> ($XDG_CONFIG_HOME); env via dedicated ~/.config/environment.d/90-claude-ctrl-enter.conf (REACT_PROFILE=1; moved to backups on uninstall; never edits ~/.profile etc.); state ~/.local/state/claude-keys ($XDG_STATE_HOME); foreign REACT_PROFILE (environment.d/*.conf, ~/.profile, ~/.bash_profile, ~/.bashrc, ~/.zshenv, ~/.pam_environment, process env) =1 → reuse (envSetByUs=false), other → NG; /etc/environment(.d) any → NG; app.asar under /usr/lib|/opt|/usr/share/*claude*/resources if found: no "REACT_PROFILE" string → NG; user must log out/in after install (DEC-14, ISSUE-23).
+release packaging scripts/build-release.ps1 → dist/claude-ctrl-enter-<ver>.zip: top folder claude-ctrl-enter-<ver>/ with 3 .bat, 3 .sh, scripts/claude-keys.ps1, scripts/claude-keys.sh, extension/*, README.md, README.en.md, LICENSE, CHANGELOG.md, PRIVACY.md, inner SHA256SUMS.txt (entry names use '/'); plus dist/SHA256SUMS.txt. ZIP has no unix exec bits → docs say `bash install.sh`.
+legacy/: prototype 0.2.0 (extension/{manifest.json,main-probe.js,badge.js}, content = handoff-verified files, LF-normalized so handoff SHA256 differ), install-probe.ps1 (requires real-path developer_settings.json, refuses if target/state/REACT_PROFILE exist), uninstall-probe.ps1 (checks manifest name → refuses after our update; acceptable), README.md. used only to rehearse legacy→new updates.
 
 ## 5. DECISIONS
-DEC-01 load via REACT_PROFILE devtools cache path (only path found that works from normal icon). rejected: launcher+CDP (user dislike + Claude rejects debug args), NODE_OPTIONS (fuse disabled), asar patch (constraint), Claude "install extension" menu (MCP/DXT only).
-DEC-02 send by clicking existing send button (not internal command / synthetic Enter).
-DEC-03 settings UI in sidebar above profile (native menu unreachable from extension).
-DEC-04 (CONFIRMED by ID calc L21) keep install folder path & ID folder name forever; do NOT add manifest "key" (would change ID → settings lost) [GUESS-based, keep until verified]. renaming manifest name requires changing uninstall ownership check to a marker file first.
-DEC-05 (2026-10-09) send button resolved per editor: walk ancestors from editor; first ancestor with ≥1 visible send button must have exactly 1 and contain no other editor, else no send (status send-unavailable).
-DEC-07 (2026-10-09, user) installer = plain .bat + .ps1 only. no exe/MSI/signing, no downloads, no admin, no global ExecutionPolicy change (bat uses process-scope -ExecutionPolicy Bypass). reason: SAC / AV block elaborate installers; signing is burdensome. keep scripts readable (no obfuscation).
-DEC-08 (2026-10-09) script layout: scripts/claude-keys.ps1 (single script, -Action), root *.bat wrappers (diagnose.bat now; install/uninstall later). ps1 = UTF-8 BOM + CRLF (PS5.1 garbles BOM-less JA); bat = CRLF ASCII. enforced by .gitattributes + .editorconfig. ownership marker file claude-keys.owner.json planned (ISSUE-06).
-DEC-11 (2026-10-09, user) license MIT (user had no preference, even 0BSD ok; MIT kept: already present, widely understood). copyright holder = GitHub account zawa356. NEVER put user real name anywhere (repo, commit author/email, messages).
-DEC-12 (2026-10-09, user) publish everything except personal info: AI docs (AISTATE, AI_HANDOFF_JA, AGENTS, CONTINUE_PROMPT) are public. C:\Users\zawa test paths OK. never commit Claude config contents with org ids etc.
-DEC-13 (2026-10-09) repo layout for release: extension/keys.js (MAIN, was main-probe.js), extension/settings-ui.js (isolated, was badge.js), manifest name "Claude Ctrl+Enter" v0.3.0 (name change safe: ID from path, new uninstall uses marker; legacy uninstall-probe.ps1 would now refuse = acceptable), tests/*.test.cjs, legacy/{extension(0.2.0 blobs), install-probe.ps1, uninstall-probe.ps1, README.md}, scripts/build-release.ps1 → dist/claude-ctrl-enter-<ver>.zip (top folder claude-ctrl-enter-<ver>/, files: 3 bat, scripts/claude-keys.ps1, extension/*, README.md, README.en.md, LICENSE, CHANGELOG.md, PRIVACY.md, inner SHA256SUMS.txt) + dist/SHA256SUMS.txt; checks version consistency manifest/package.json/CHANGELOG section and clean git. .github/workflows/ci.yml: windows-latest npm ci + npm test; on tag v* build + gh release create with CHANGELOG section notes. README.md = JA primary, README.en.md = EN, Quick start first.
-DEC-14 (2026-10-09, user) Linux support (user: Claude has Linux build; mac wanted but no test machine → Windows+Linux only). official Claude Desktop Linux beta (Debian 12+/Ubuntu 22.04+, ~2026-06-30, per web search). scripts/claude-keys.sh mirrors ps1: actions diagnose/install/uninstall, --yes, --sandbox DIR (HOME,/etc,app.asar redirected), --fail-at; target ~/.config/Claude/extensions/<id>; env via dedicated ~/.config/environment.d/90-claude-ctrl-enter.conf (never edit ~/.profile etc.; uninstall moves it to backups); foreign REACT_PROFILE in environment.d/*.conf, ~/.profile, ~/.bash_profile, ~/.bashrc, ~/.zshenv, ~/.pam_environment, process env: value 1 → reuse (envSetByUs=false), other → NG; /etc/environment(.d) any → NG; app.asar grep REACT_PROFILE if found (missing string → NG); state ~/.local/state/claude-keys/state.json; root wrappers install.sh/uninstall.sh/diagnose.sh (git exec bit set; ZIP loses bits → docs say bash install.sh). tests/installer-sh.test.cjs (Git Bash on Windows at C:/Program Files/Git/bin/bash.exe, bash on Linux). CI job test-linux (keyboard + sh installer + bash -n).
-DEC-10 (2026-10-09) startup: both scripts run_at document_start; MAIN starts with ready=false → defaults apply but action send is swallowed (no send) until valid settings arrive via bridge; 3s fallback timer sets ready=true so a broken badge.js never disables sending forever.
-DEC-09 (2026-10-09) suggestion-menu detection requires BOTH plugin active state AND visible menu; on doubt intercept as newline (fail-safe = no unexpected send). key-name filter instead of any "active" plugin, because a stuck unrelated active flag would route Enter to Claude (= send).
-DEC-06 (2026-10-09) knowledge store = docs/AISTATE.md (this), updated every work unit; AGENTS.md points here.
+DEC-01 load via REACT_PROFILE devtools-cache path (only path found that works from the normal icon). rejected: launcher+CDP (user dislike + Claude rejects debug args), NODE_OPTIONS (fuse disabled), asar patch (constraint), Claude "install extension" menu (MCP/DXT only).
+DEC-02 send by clicking Claude's own send button (no internal command / synthetic Enter).
+DEC-03 settings UI in the sidebar above the profile (native app menu unreachable from the extension).
+DEC-04 [CONFIRMED L21] keep the install folder path / ID folder name forever; never add manifest "key". manifest name may change (done in v0.3.0) because ownership uses the marker file.
+DEC-05 send button resolved per editor (ancestor walk; ambiguous → no send).
+DEC-06 knowledge store = docs/AISTATE.md, updated every work unit; AGENTS.md points here.
+DEC-07 (user) installer = plain scripts only (see §1). reason: SAC/AV block elaborate installers; signing is burdensome.
+DEC-08 single installer script per OS with actions + thin wrappers; encodings per §3.
+DEC-09 suggestion-menu detection needs BOTH plugin active state AND a visible menu; doubt → newline (fail-safe = never an unexpected send). key-name filter, not "any active plugin".
+DEC-10 startup: run_at document_start; no send until settings arrive; 3s fallback.
+DEC-11 (user) license MIT (user had no preference; MIT already present and widely understood), holder zawa356. never the real name.
+DEC-12 (user) publish everything except personal info, including AI docs (AISTATE, AI_HANDOFF_JA, AGENTS, CONTINUE_PROMPT).
+DEC-13 v0.3.0 layout/naming: extension/keys.js + settings-ui.js, manifest name "Claude Ctrl+Enter", tests/*.test.cjs, legacy/, scripts/build-release.ps1, CI, README.md (JA, Quick start first) + README.en.md.
+DEC-14 (user) Windows + Linux support; macOS skipped (no test machine). Linux design per §4.
+DEC-15 (user, L27) keep .bat as the Windows entry point even though downloaded files show the Attachment Manager "publisher could not be verified" dialog; document "press 実行" and optional Unblock.
+DEC-16 (L35) v0.3.0 stays the Latest release after doc-only commits; cut a new release only when shipped files (ZIP contents) change.
 
-## 6. ISSUES (from 2026-10-09 review; status: OPEN|FIXED|WONTFIX)
-ISSUE-01 FIXED([AI_SIM] + [USER_REAL L13: Ctrl+Enter sends on 2.31226 → sendButtonFor finds composer button in real DOM]; multi-editor case still [AI_SIM] only) send button was global → Ctrl+Enter in other editor could send main composer draft. reproduced in test-integration with old code. fix=DEC-05.
-ISSUE-02 RESOLVED(L14) [USER_REAL 2.31226]: Ctrl+Shift+Enter and Ctrl+Alt+Enter with text → nothing happens (Claude does not send). no change needed; recheck on future versions. was: unassigned multi-modifier Enter (Ctrl+Shift, Ctrl+Alt, Meta) passes to Claude [AI_SIM]; unknown if Claude sends on them. need real check or swallow all non-assigned Enter combos except Shift/Alt?
-ISSUE-03 FIXED(L18 [USER_REAL]: skills + Doc/Slides select correctly with ext ON and empty composer, same as ext OFF. earlier one-off send NOT reproducible, see ISSUE-21) FIXED-SIM(L16) CONFIRMED-BUG(L14) [USER_REAL 2.31226]: "/" opens slash menu; selecting with arrows + Enter inserts newline instead of choosing (Tab chooses fine). Enter in suggestion menus is intercepted as newline; need detect open menu → defer to Claude.
-ISSUE-04 FIXED(L25 [USER_REAL]: document_start works for MAIN+isolated on 2.31226; sidebar mounts; keys/menu OK) before settings load MAIN uses defaults(enabled) [AI_SIM]; before document_idle no patch at all (Claude default Enter=send). options: run_at document_start; safe pending state.
-ISSUE-05 FIXED(L07, [AI_SIM]) badge.js: chrome.storage missing → sync TypeError at get() → no UI (badge.js:~73). corrupted stored value silently → defaults. onChanged with removed value ignored. dialog open + external change → stale form overwrites.
-ISSUE-06 RESOLVED(L23 [USER_REAL]: uninstall→reinstall at same path keeps chrome.storage settings) PARTIAL(L09) marker file claude-keys.owner.json now written; folder path kept on update. settings carry-over across legacy→new update unverified [USER_REAL pending]. manifest name still legacy (rename now safe for new script, but old uninstall-probe.ps1 checks name).
-ISSUE-07 FIXED-SIM(L09: install/update/uninstall+rollback in claude-keys.ps1, [AI_SIM] sandbox only; [USER_REAL] pending) installer: no rollback; leftover prepared state blocks rerun; after uninstall can't reinstall (stateRoot remains); no update/repair path. plan: single script with install/update/repair/uninstall/diagnose + backup+hash verify+rollback.
-ISSUE-08 OPEN React DevTools coexistence: install refuses if folder exists (good) but after install real React DevTools never downloads; REACT_PROFILE is user-global (affects other Electron/React apps). document + diagnose.
-ISSUE-09 RESOLVED(L12) [USER_REAL ENV-VM, Claude 2.31226.0.0]: extension loads WITHOUT developer_settings.json (dev mode not required). was: developer_settings.json requirement unverified (ENV-VM lacks it → current installer refuses). verify whether loading works without dev mode.
-ISSUE-10 PARTIAL(L07: sidebar label+dialog reflect MAIN status, [AI_SIM]; installer version check still OPEN) UI showed only enabled/disabled label; MAIN status (unsupported/send-unavailable) invisible. compat detection: runtime only; installer has no Claude-version check (plan: warn on untested version, don't block).
-ISSUE-11 OPEN sidebar remount judged by host.isConnected only; multiple sidebars/rail/overlay unverified; rail (<160px) hides entry → settings unreachable.
-ISSUE-12 PARTIAL integration test added (L04, extended L07) (test-integration.cjs) but runs both scripts in page world (not MAIN/isolated split), mock editor, no real IME.
-ISSUE-13 RESOLVED(L26: README ja/en rewritten, duplicates removed, CONTRIBUTING/PRIVACY rewritten) repo hygiene: README describes old plan (src/, macOS Cmd+Enter, browser support) ≠ implementation; duplicate docs/00_work_hikitsugi; empty docs/01_shijisho; CONTRIBUTING mentions src/manifest.json; PRIVACY permissions table TODO.
-ISSUE-14 RESOLVED(L26: user delegated choice → keep MIT, holder zawa356) LICENSE file = MIT (Copyright 2026 zawa356) from user's initial commit 784476a, but handoff says license undecided → ask user before relying on it.
-ISSUE-15 OPEN newline on key repeat suppressed (holding Enter gives 1 newline) — minor UX diff.
-ISSUE-20 FIXED(L20, [AI_SIM] sandbox + real read-only diagnose on ENV-VM) (L17) MSIX virtualization: Claude userData split between real %APPDATA%/Claude and Packages/<PFN>/LocalCache/Roaming/Claude (ENV-VM). installer/diagnose only look at real path → may miss a React DevTools folder or developer_settings in virtual path. fix: check both (PFN from Get-AppxPackage).
-ISSUE-21 PARKED (user decision L19) one-off: ext ON, Doc/Slides picked via slash menu + Enter → message sent + navigated to Slides (first test only). NOT reproducible: ext OFF empty/with text, ext ON empty/with text (Enter newline then /sli + Enter) all → chip only. ext only clicks send on assigned send key; menuOpen verified true for Doc/Slides. possible causes [GUESS]: Enter before menu rendered, or Claude-side transient. revisit only if reported again.
-ISSUE-22 OPEN real %APPDATA%/Claude missing → diagnose NG (install refused). on machines where Claude only writes to the virtualized location this blocks install; unknown whether ext placed in real path would load if real Claude dir did not pre-exist (merged view should allow it [GUESS]). decide after testing on a fresh machine/user.
-ISSUE-23 OPEN (L27) Linux support (claude-keys.sh) verified only by sandbox tests (Git Bash on Windows + CI ubuntu). unknown on real Claude Desktop Linux beta: userData path (~/.config/Claude assumed = Electron default for app name Claude), whether REACT_PROFILE loader exists in Linux build (script greps app.asar if found under /usr/lib|/opt|/usr/share/*claude*), whether environment.d is honored by the desktop session launching Claude, process name for pgrep.
-ISSUE-24 FIXED(L29: CI run 37882798802 green on windows-latest + ubuntu-latest) Windows PowerShell 5.1 launched from PowerShell 7 (CI runner default shell pwsh; also users running install.bat from a pwsh terminal) inherits pwsh PSModulePath → Get-FileHash "not recognized" → install rolled back (rollback worked). fix: reset $env:PSModulePath to User+Machine values at script start (5.1 only) + .NET SHA256 helper Get-Sha256 (claude-keys.ps1, build-release.ps1). could not reproduce locally (no pwsh on ENV-VM; bogus path alone does not break 5.1).
-ISSUE-18 OPEN installer moves folders between %APPDATA%/Claude/extensions and %LOCALAPPDATA%/ClaudeKeys/backups; Move-Item fails across volumes (roaming/folder redirection) → install aborts+rolls back safely but cannot update. untested.
-ISSUE-19 OPEN updating while Claude runs: directory rename may fail if Chromium holds handles → rollback path; untested on real machine. script never kills Claude (by design).
-ISSUE-17 RESOLVED(L27 [USER_REAL ENV-VM, SAC evaluation mode]: ZIP with ZoneId=3 extracted by Explorer → install.bat shows "開いているファイル - セキュリティの警告 / 発行元を確認できませんでした" (Attachment Manager) → 実行 works, update 0.3.0 succeeded. user decision: keep bat entry point, document "press 実行" + optional Unblock. SAC ENFORCE mode still untested) downloaded ZIP carries Mark-of-the-Web → SmartScreen/SAC may block or prompt .bat/.ps1; untested. test with a real downloaded ZIP at release stage; document Unblock / "詳細情報→実行".
-ISSUE-16 RESOLVED(L13) real-machine verification of ISSUE-01 fix (single composer case) requires install on ENV-VM (needs installer work or one-off manual install with checkpoint).
+## 6. ISSUES (status: OPEN | PARTIAL | FIXED | RESOLVED | PARKED)
+ISSUE-01 FIXED [AI_SIM + USER_REAL L13 single composer]: send button was global (fix DEC-05). multi-editor case (editing an earlier message) only [AI_SIM]; there Ctrl+Enter may do nothing (documented as known limitation).
+ISSUE-02 RESOLVED [USER_REAL L14]: Ctrl+Shift/Ctrl+Alt+Enter → Claude does nothing. recheck on future versions.
+ISSUE-03 FIXED [USER_REAL L18]: Enter in slash/mention menus now picks the item (skills, Doc, Slides).
+ISSUE-04 FIXED [USER_REAL L25]: startup gap (document_start + no send before settings).
+ISSUE-05 FIXED [AI_SIM]: storage API missing/corrupted/removed/external change handling.
+ISSUE-06 RESOLVED [USER_REAL L23, L30]: settings survive uninstall→reinstall and legacy 0.2.0 → 0.3.0 update.
+ISSUE-07 FIXED [AI_SIM sandbox + USER_REAL L11/L17/L22/L23/L27/L30]: installer install/update(while running)/uninstall/reinstall/legacy update/rollback.
+ISSUE-08 PARTIAL: React DevTools coexistence. installer refuses if a real React DevTools folder exists (real + virtual path); README documents that REACT_PROFILE is user-global and that real React DevTools cannot be used while installed. no further action planned.
+ISSUE-09 RESOLVED [USER_REAL L12]: developer mode not required.
+ISSUE-10 FIXED: sidebar shows real status; installer warns on untested Claude versions (TestedVersions).
+ISSUE-11 OPEN: sidebar remount judged by host.isConnected only; multiple sidebars / rail / overlay unverified; rail (<160px) hides the entry (settings unreachable while collapsed).
+ISSUE-12 PARTIAL: integration test runs both scripts in the page world (not the real MAIN/isolated split), mock editor, no real IME.
+ISSUE-13 RESOLVED (L26): repo hygiene / README rewrite.
+ISSUE-14 RESOLVED (L26): license MIT, holder zawa356.
+ISSUE-15 OPEN (minor): holding Enter inserts one newline (repeat ignored). documented.
+ISSUE-16 RESOLVED (L13).
+ISSUE-17 RESOLVED for SAC evaluation mode [USER_REAL L27]: downloaded ZIP → Attachment Manager dialog → 実行 works. SAC ENFORCE mode untested (N8).
+ISSUE-18 OPEN: AppData on another volume (roaming/folder redirection) → Move-Item between %APPDATA% and %LOCALAPPDATA% may fail → safe rollback but no update. untested.
+ISSUE-19 RESOLVED-ish [USER_REAL L17/L27]: updating while Claude runs worked on ENV-VM; rollback covers failures elsewhere.
+ISSUE-20 FIXED (L20): MSIX virtualized userData also diagnosed.
+ISSUE-21 PARKED (L19): one-off unexplained send after picking Slides with ext ON; not reproducible. revisit only if reported.
+ISSUE-22 OPEN: install refused when real %APPDATA%\Claude is missing (possible on machines where Claude only writes to the virtualized location). needs a fresh-user test.
+ISSUE-23 OPEN: Linux not verified on a real Claude Desktop beta (userData path, loader presence in Linux build, environment.d honored by the session, process name).
+ISSUE-24 FIXED (L29): pwsh-launched PS 5.1 PSModulePath issue.
+ISSUE-25 OPEN (idea): CI release notes are the raw CHANGELOG section (title = tag); v0.3.0 was hand-edited (L33). template with install steps + SHA256 for future releases.
+ISSUE-26 OPEN (minor): diagnose could print the computed real extension ID and whether saved settings exist (carry-over check).
 
-## 7. FILE MAP (pre-L26 names; see DEC-13 for current layout)
-extension/{manifest.json,main-probe.js,badge.js} = shipped ext. install-probe.ps1/uninstall-probe.ps1 = prototype scripts (not public-grade).
-test-keyboard.cjs (node vm mock of main-probe), test-settings-ui.cjs (Playwright+Edge, badge only), test-integration.cjs (Playwright+Edge, badge+main, real key events, storage mock with failure injection & onChanged).
-docs/AI_HANDOFF_JA.md = ChatGPT-era full handoff (frozen 2026-10-08). docs/PROTOTYPE_README_SNAPSHOT.md = old prototype README. docs/HANDOFF_VALIDATION.md. CONTINUE_PROMPT.md = initial prompt to VS Code AI.
-memory (Claude Code, per-user, outside repo): dev-machine-is-hyperv-vm, reply-in-japanese.
+## 7. FILE MAP (v0.3.0)
+root: README.md (JA, Quick start), README.en.md, CHANGELOG.md (Keep a Changelog; [0.3.0] + prototype history), LICENSE (MIT zawa356), PRIVACY.md (JA/EN), CONTRIBUTING.md (JA + EN summary, release steps), AGENTS.md (AI rules), install.bat/uninstall.bat/diagnose.bat, install.sh/uninstall.sh/diagnose.sh, package.json (0.3.0; scripts test/test:keyboard/test:installer/test:ui) + package-lock.json, .editorconfig, .gitattributes, .gitignore (dist/, node_modules/, settings-preview.png, *.zip...).
+extension/: manifest.json, keys.js, settings-ui.js.
+scripts/: claude-keys.ps1 (Windows), claude-keys.sh (Linux), build-release.ps1 (dev only, not shipped).
+tests/: keyboard.test.cjs (node vm mock of keys.js incl. pending/fallback timers), installer.test.cjs (ps1 sandbox, 10+ scenarios), installer-sh.test.cjs (sh sandbox via Git Bash/bash), settings-ui.test.cjs (Playwright+Edge, settings-ui only), integration.test.cjs (Playwright+Edge, both scripts, real key events, storage mock with failure injection).
+legacy/: README.md, extension/ (0.2.0), install-probe.ps1, uninstall-probe.ps1.
+docs/: AISTATE.md (this), AI_HANDOFF_JA.md (frozen 2026-10-08 handoff), HANDOFF_VALIDATION.md (historical 2026-10-08 transfer check), PROTOTYPE_README_SNAPSHOT.md (old prototype README), CONTINUE_PROMPT.md (historical first prompt), .gitkeep.
+.github/workflows/ci.yml: jobs test (windows-latest, npm ci + npm test), test-linux (ubuntu-latest, keyboard + sh installer + bash -n), release (tag v*: build ZIP, notes from CHANGELOG, gh release create). actions checkout/setup-node v5, Node 22.
+outside repo: Claude Code memory (per user): dev-machine-is-hyperv-vm, reply-in-japanese, simple-script-installer, batch-simple-checks, never-write-real-name. scratchpad bundles pre-rewrite.bundle / pre-rewrite2.bundle contain OLD history incl. real name — never push them.
 
 ## 8. LOG (append-only)
 L01 2026-10-08 [HANDOFF] ChatGPT/Codex built 0.0.1 load probe → 0.1.0 keys → 0.2.0 sidebar UI+storage on ENV-ORIG. user verified items 1-10 in AI_HANDOFF_JA §3.
@@ -146,14 +173,14 @@ L30 2026-10-09 found+fixed (00cdbc1): stale ClaudeKeys state status=removed took
 L31 2026-10-09 user approved going public + v0.3.0 tag. pre-public scan found a partial real name inside AISTATE L26 text (6 commits) → rewrote history again (filter-branch tree-filter, bundle backup pre-rewrite2.bundle in scratchpad), deleted + recreated PRIVATE repo, pushed 5c4d7e2. rule tightened in AGENTS: never write real name even partially; refer to it as "real-name". scan: no real name / org id / tokens in any commit.
 L32 2026-10-09 PUBLISHED. auto-mode classifier denied AI running visibility change + tag push ([Create Public Surface]) → user ran: topics (claude, claude-desktop, ime, japanese, keyboard-shortcuts, keybindings, windows, linux, electron), visibility public, push tag v0.3.0 (tag -> ac7eab4). CI run 37889225932 green incl. release job → https://github.com/zawa356/claude_ctrl-enter/releases/tag/v0.3.0 with claude-ctrl-enter-0.3.0.zip (33,525 B) + SHA256SUMS.txt; notes = CHANGELOG [0.3.0]. AI downloaded assets: sha256 matches, 17 entries, ps1 BOM+CRLF intact. NOTE for future agents: publishing actions (visibility, tags, releases) may be blocked for the AI → hand the exact commands to the user. test leftovers on ENV-VM: ~/Downloads/claude-ctrl-enter-0.3.0.zip (+ extracted folder) from MOTW test.
 L33 2026-10-09 user thought v0.3.0 was only a tag (URL /releases/tag/v0.3.0); it was already a full non-draft, non-prerelease, Latest release. at user request made it look formal: title "Claude Ctrl+Enter v0.3.0 — 最初の公開版 / First public release", bilingual notes (download, SHA256, install steps Win/Linux, tested scope, disclaimer, highlights, CHANGELOG link) via gh release edit (allowed this time). published ZIP sha256 = d94fed3d93b62c3cddcf908030ec365a1280d9970a3a1d1bb8355d9bdf9d933e (CI build incl. Linux; the 4e3317... in L27 was an older local pre-Linux build — I first pasted the wrong one into notes, then corrected). idea: make CI release notes template include install steps + sha automatically for future releases.
+L34 2026-10-09 doc refresh (user: final polish, AISTATE most important). AISTATE rewritten to v2: §0-7 + §9 = current state (old §0-7 had stale names main-probe/badge, PRIVATE repo, "3 suites", obsolete SHA256SUMS/00_work_hikitsugi notes, and two lines garbled by Git Bash sed: TOOLING CR line and the extension-ID line uppercased by "\U" in a replacement). facts preserved; new DEC-15 (keep .bat despite MOTW dialog), DEC-16 (no new release for doc-only changes), ISSUE-25 (release notes template), ISSUE-26 (diagnose shows real ID); ISSUE-07/10/19 statuses updated from LOG evidence. §8 LOG L01-L33 kept verbatim. other docs: HANDOFF_VALIDATION.md and CONTINUE_PROMPT.md marked historical; README/README.en/CONTRIBUTING dev sections mention Git Bash for sh tests; AGENTS.md gained release/publishing notes and current-state pointers.
+L35 2026-10-09 checked before finishing: no open PRs, only branch main (local = origin), v0.3.0 is the Latest non-draft release with ZIP + SHA256SUMS. user asked for a "formal release" (thought it was only a tag) → title/notes improved (L33); no new version cut (DEC-16).
 
-## 9. NEXT (proposed order; user picks) — v0.3.0 published L32
-N6 update ENV-ORIG (original PC, prototype 0.2.0) with release ZIP install.bat (procedure verified on ENV-VM L30).
-N7 real-machine check on Claude Desktop Linux beta (ISSUE-23).
-N8 SAC enforce-mode behavior of downloaded bat (ISSUE-17 remainder); editing-earlier-message editor Enter/Ctrl+Enter behavior; fresh user without real %APPDATA%/Claude (ISSUE-22).
-N9 watch Claude updates: add versions to TestedVersions after checks; re-run DOM probe if status turns 非対応.
-N1 DONE (c6a4977 fix, 83c9fa9 docs).
-N2 DONE eacadf4.
-N3 ISSUE-04 / ISSUE-02 / ISSUE-03 key-logic design (needs real-machine observation; one step at a time).
-N4 DONE (L23 real round trip OK).
-N5 ISSUE-13/14 repo/README/license cleanup with user decisions.
+## 9. NEXT (proposed; user picks)
+N6 update ENV-ORIG (prototype 0.2.0) with the v0.3.0 release ZIP install.bat; one restart afterwards; check label + keys. procedure rehearsed on ENV-VM (L30).
+N7 real-machine check on Claude Desktop Linux beta (ISSUE-23): diagnose.sh output, install.sh, re-login, sidebar label, keys.
+N8 remaining checks: SAC enforce mode with downloaded bat (ISSUE-17); Enter/Ctrl+Enter in the edit-earlier-message editor (ISSUE-01 multi-editor); fresh Windows user without real %APPDATA%\Claude (ISSUE-22); AppData on another volume (ISSUE-18).
+N9 follow Claude updates: on a new version run diagnose, check sidebar label/keys/slash menu, then add to TestedVersions (ps1) and README tables; if label shows 非対応, re-run the DOM probe (§3) to find what changed.
+N10 release tooling: CI notes template with install steps + SHA256 (ISSUE-25); diagnose prints real extension ID / saved-settings presence (ISSUE-26).
+N11 optional cleanup on ENV-VM: ~/Downloads test ZIP + folder, %LOCALAPPDATA%\ClaudePatchLab (only if the user wants; checkpoints exist).
+done: N1-N5 (old review items) all completed by L25-L32.

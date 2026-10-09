@@ -1,5 +1,8 @@
 # 引き継ぎパッケージ検証
 
+> [!NOTE]
+> **履歴資料（2026-10-08 時点）。** ここに出てくる `SHA256SUMS.txt`、`install-probe.ps1`、`test-*.cjs` などは v0.3.0 で削除・移動されています（`legacy/`、`tests/`）。現在の状態は [AISTATE.md](AISTATE.md) を参照してください。
+
 検証日: 2026-10-08（Asia/Tokyo）
 
 ## ソースの由来
