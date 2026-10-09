@@ -37,6 +37,14 @@ if ($Sandbox) {
 $Target    = Join-Path $UserData "extensions\$ExtensionId"
 $StateFile = Join-Path $StateRoot 'state.json'
 
+# MSIX のファイル仮想化先。Claude が新しく作る設定の多くはここに入り、実際の %APPDATA%\Claude と
+# 重ねて見える（docs/AISTATE.md ISSUE-20）。拡張はこれまで通り実際の場所へ置き、ここは確認だけする。
+function Get-VirtualUserData($Package) {
+    if (!$Package -or !$Package.PSObject.Properties['PackageFamilyName'] -or !$Package.PackageFamilyName) { return $null }
+    $local = if ($Sandbox) { Join-Path $Sandbox 'AppData\Local' } else { $env:LOCALAPPDATA }
+    Join-Path $local "Packages\$($Package.PackageFamilyName)\LocalCache\Roaming\Claude"
+}
+
 function Step([string]$Name) { if ($FailAt -eq $Name) { throw "テスト用の故意の失敗: $Name" } }
 
 function Read-Json([string]$Path) {
@@ -51,7 +59,7 @@ function Get-Prop($Object, [string]$Name) {
 }
 
 function Get-ClaudePackage {
-    if ($Sandbox) { return [pscustomobject]@{ Version = $TestedVersions[0] } }
+    if ($Sandbox) { return [pscustomobject]@{ Version = $TestedVersions[0]; PackageFamilyName = 'Claude_pzs8sxrjxfjjc' } }
     try { Get-AppxPackage -Name 'Claude' -ErrorAction Stop | Select-Object -First 1 } catch { $null }
 }
 
@@ -82,10 +90,10 @@ function Set-UserReactProfile($Previous, [switch]$Restore) {
 }
 
 # 拡張フォルダーの持ち主: none / ours / legacy-probe / react-devtools / unknown
-function Get-TargetOwner {
-    if (!(Test-Path -LiteralPath $Target)) { return 'none' }
-    if (Test-Path -LiteralPath (Join-Path $Target $MarkerFile)) { return 'ours' }
-    $manifest = Read-Json (Join-Path $Target 'manifest.json')
+function Get-TargetOwner([string]$Path = $Target) {
+    if (!(Test-Path -LiteralPath $Path)) { return 'none' }
+    if (Test-Path -LiteralPath (Join-Path $Path $MarkerFile)) { return 'ours' }
+    $manifest = Read-Json (Join-Path $Path 'manifest.json')
     $name = Get-Prop $manifest 'name'
     if ($name -eq $LegacyName) { return 'legacy-probe' }
     if ($name -match 'React Developer Tools') { return 'react-devtools' }
@@ -103,11 +111,15 @@ function Get-Findings {
     elseif ($TestedVersions -contains $pkg.Version) { & $add 'OK' 'Claude' "$($pkg.Version)（動作確認済みの版）" }
     else { & $add 'WARN' 'Claude' "$($pkg.Version)（未確認の版。動かない可能性があります）" }
 
+    $virtual = Get-VirtualUserData $pkg
+    $hasVirtual = $virtual -and (Test-Path -LiteralPath $virtual)
     if (Test-Path -LiteralPath $UserData) { & $add 'OK' '設定フォルダー' $UserData }
     else { & $add 'NG' '設定フォルダー' "$UserData がありません。Claudeを一度起動してください。" }
+    if ($hasVirtual) { & $add 'INFO' '設定フォルダー（パッケージ専用）' $virtual }
 
-    if (Test-Path -LiteralPath (Join-Path $UserData 'developer_settings.json')) { & $add 'INFO' '開発者モード設定' 'developer_settings.json あり' }
-    else { & $add 'INFO' '開発者モード設定' 'developer_settings.json なし（必須かどうかは未確認）' }
+    $devFiles = @($UserData, $(if ($hasVirtual) { $virtual })) | Where-Object { $_ } | ForEach-Object { Join-Path $_ 'developer_settings.json' }
+    if (@($devFiles | Where-Object { Test-Path -LiteralPath $_ }).Count) { & $add 'INFO' '開発者モード設定' 'developer_settings.json あり（導入には不要）' }
+    else { & $add 'INFO' '開発者モード設定' 'developer_settings.json なし（導入には不要）' }
 
     switch (Get-TargetOwner) {
         'none'           { & $add 'OK' '拡張フォルダー' '未導入' }
@@ -115,6 +127,11 @@ function Get-Findings {
         'legacy-probe'   { & $add 'OK' '拡張フォルダー' '導入済み（試作版 0.2.0 以前）' }
         'react-devtools' { & $add 'NG' '拡張フォルダー' '本物の React DevTools があります。上書きしないため導入できません。' }
         default          { & $add 'NG' '拡張フォルダー' '持ち主の分からないフォルダーがあります。上書きしないため導入できません。' }
+    }
+    if ($hasVirtual) {
+        $virtualOwner = Get-TargetOwner (Join-Path $virtual "extensions\$ExtensionId")
+        if ($virtualOwner -eq 'react-devtools') { & $add 'NG' '拡張フォルダー（パッケージ専用）' '本物の React DevTools があります。こちらが優先される可能性があるため導入しません。' }
+        elseif ($virtualOwner -ne 'none') { & $add 'NG' '拡張フォルダー（パッケージ専用）' "同じIDのフォルダーがあります（$virtualOwner）。こちらが優先される可能性があるため導入しません。" }
     }
 
     $user = Get-ReactProfile 'User'; $machine = Get-ReactProfile 'Machine'

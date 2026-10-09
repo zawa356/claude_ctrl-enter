@@ -133,4 +133,20 @@ setEnv(p, 'User', '2');
 check(run(p, 'uninstall'), 0);
 assert.equal(userEnv(p), '2');
 
+// 10. MSIX virtualized userData (Packages\<PFN>\LocalCache\Roaming\Claude) is checked too.
+p = sandbox();
+const virtual = path.join(p.root, 'AppData', 'Local', 'Packages', 'Claude_pzs8sxrjxfjjc', 'LocalCache', 'Roaming', 'Claude');
+fs.mkdirSync(virtual, { recursive: true });
+fs.writeFileSync(path.join(virtual, 'developer_settings.json'), '{"allowDevTools":true}');
+r = run(p, 'diagnose');
+check(r, 0);
+assert.match(r.out, /パッケージ専用/);
+const virtualTarget = path.join(virtual, 'extensions', id);
+fs.mkdirSync(virtualTarget, { recursive: true });
+fs.writeFileSync(path.join(virtualTarget, 'manifest.json'), JSON.stringify({ name: 'React Developer Tools', version: '6.0.0' }));
+check(run(p, 'install'), 1);
+assert.ok(!exists(p.target), 'must not install when a virtualized React DevTools could shadow it');
+assert.equal(userEnv(p), null);
+
+console.log('PASS: virtualized userData checked (React DevTools there blocks install)');
 console.log('PASS: install, update, uninstall (idempotent, reinstall), legacy 0.2.0 migration, pre-set env kept, rollback at copy/swap/env/state (fresh & update), refusals (React DevTools, foreign env, machine env), env changed after install');

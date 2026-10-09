@@ -17,7 +17,8 @@
   - 導入前に診断し、本物の React DevTools や別用途の `REACT_PROFILE` があれば何も変更せず中止。
   - 途中で失敗した場合は元の状態に戻す。更新・解除時の旧ファイルは削除せずバックアップへ移す。
   - 試作版 0.2.0 からの更新に対応（拡張フォルダーの場所を変えないため、保存済みのキー設定は引き継がれる見込み。実機未確認）。
-  - 試作版と違い、`developer_settings.json`（開発者モード）を必須にしない（必要かどうかは実機未確認）。
+  - 試作版と違い、`developer_settings.json`（開発者モード）を必須にしない（開発者モード無しで読み込まれることを実機で確認）。
+  - MSIX の仮想化で Claude の設定が `%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Roaming\Claude` に置かれている環境も診断する。そこに同じIDの拡張（本物の React DevTools など）があれば導入しない。
 
 ### Changed
 
