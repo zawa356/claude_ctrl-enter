@@ -8,6 +8,26 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-09
+
+Claude Desktop が読み込める拡張は1つだけです。そのため 0.3.0 までは、同じ仕組みを使う他のツール（例：[claude-split-ui](https://github.com/zawa356/claude-split-ui)）と同時に使えませんでした。0.4.0 では、拡張フォルダーの管理を共通ローダー [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext) に任せ、他のツールと共存できるようにしました。
+
+### Changed
+
+- 導入・更新・解除・診断の中身を共通ローダーに移しました。`install.bat` などの使い方は変わりません。
+  - 拡張の本体は `%LOCALAPPDATA%\ClaudeDesktopWebExt\web-extensions\claude-ctrl-enter\` に置きます。Claude が読み込むフォルダー（`%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi`）は、ローダーが入っている全ツールから毎回作り直します。
+  - フォルダーの場所は変わらないため、拡張のIDと保存済みのキー設定はそのまま引き継がれます。
+  - `REACT_PROFILE` の管理と導入の記録はローダー側（`%LOCALAPPDATA%\ClaudeDesktopWebExt`）に移ります。最後のツールを解除したときだけ、ローダーが設定した `REACT_PROFILE` を削除します。
+  - 診断と導入の画面にはローダーの英語表示が混ざります。
+- 0.3.x と試作版 0.2.0 からは `install.bat` で自動的に移行します。以前の拡張フォルダーはバックアップへ移し、0.3.x が設定した `REACT_PROFILE` は引き継ぎます。
+- Linux 版も同じ方式にしました。ローダーには **python3（3.8 以上）が必要**です（Ubuntu / Debian のデスクトップには標準で入っています）。`REACT_PROFILE` の設定ファイルは `~/.config/environment.d/90-claude-desktop-webext.conf` に変わり、0.3.x の `90-claude-ctrl-enter.conf` は移行時にバックアップへ移します。
+- 動作確認済みの Claude の版は `desktop-webext.json` に記載しています。
+
+### Notes
+
+- 移行した後は、0.3.x の `uninstall.bat` / `uninstall.sh` は「持ち主の分からないフォルダー」として何もせず中止します。解除には 0.4.0 以降を使ってください。
+- 開発用チェックアウトでは `git submodule update --init` が必要です（ローダーを `vendor/claude-desktop-webext` に置いています）。
+
 ## [0.3.0] - 2026-10-09
 
 最初の公開版です。

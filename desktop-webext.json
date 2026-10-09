@@ -1,0 +1,14 @@
+{
+  "id": "claude-ctrl-enter",
+  "displayName": "Claude Ctrl+Enter",
+  "source": "extension",
+  "order": 50,
+  "testedClaudeVersions": {
+    "windows": ["2.26454.2.0", "2.31226.0.0"],
+    "linux": []
+  },
+  "adopt": {
+    "markers": ["claude-keys.owner.json"],
+    "manifestNames": ["Claude Enter Patch - Load Probe"]
+  }
+}
