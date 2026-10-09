@@ -11,7 +11,7 @@
       "js": [
         "main-probe.js"
       ],
-      "run_at": "document_idle",
+      "run_at": "document_start",
       "world": "MAIN",
       "all_frames": false
     },
@@ -22,7 +22,7 @@
       "js": [
         "badge.js"
       ],
-      "run_at": "document_idle",
+      "run_at": "document_start",
       "all_frames": false
     }
   ],

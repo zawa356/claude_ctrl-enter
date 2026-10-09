@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const code = readFileSync(join(__dirname, 'extension/main-probe.js'), 'utf8');
 let now = 1000, breaks = 0, sends = 0, status;
-let savedSettings = null;
+let savedSettings = { enabled: true, send: 'Ctrl+Enter', newline: 'Enter' }; // as delivered by badge.js
 const docListeners = [];
 class Element { closest() { return this.isEditor ? this : null; } }
 const editor = new Element();
@@ -90,4 +90,40 @@ assert.equal(event('keydown').prevented, true); assert.equal(sends, 2);
 configure({ enabled:true, send:'Enter', newline:'Enter' });
 event('keydown'); assert.equal(sends, 2);
 window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, 4);
-console.log('PASS: newline, send, repeat, IME, timing, modifiers, scope, disabled/ambiguous send, send scoped to editor, slash/mention menu Enter passthrough, duplicate install, incompatible API, teardown');
+// Before badge.js delivers the stored settings: newline works, the send key never sends.
+// Delivery (event) or the 3s fallback timer makes the configuration live.
+function pendingContext() {
+  const t = { sends: 0, breaks: 0, attr: null, timers: [], keyListeners: [], docListeners: [] };
+  const ed = new Element(); ed.isEditor = true;
+  ed.editor = { commands: { setHardBreak: () => { t.breaks++; return true; } }, view: {}, state: { plugins: [] } };
+  const btn = { disabled: false, getClientRects: () => [1], getAttribute: () => null, click: () => t.sends++ };
+  ed.parentElement = { parentElement: null, querySelectorAll: s => s.includes('chat-input-send') ? [btn] : [ed] };
+  const win = { addEventListener: (type, fn, options) => t.keyListeners.push({ type, fn, options }) }; win.top = win;
+  vm.runInContext(code, vm.createContext({ window: win, Element, AbortController, performance: { now: () => 1e6 },
+    setTimeout: (fn, ms) => t.timers.push({ fn, ms }), clearTimeout: id => { if (t.timers[id - 1]) t.timers[id - 1].cleared = true; },
+    location: { origin: 'https://claude.ai' }, document: {
+      addEventListener: (type, fn, options) => t.docListeners.push({ type, fn, options }),
+      documentElement: { setAttribute() {}, getAttribute: () => t.attr },
+      querySelector: () => ed, querySelectorAll: () => []
+    } }));
+  t.press = extra => { const e = { target: ed, key: 'Enter', preventDefault() { this.prevented = true; }, stopImmediatePropagation() {}, ...extra };
+    for (const l of t.keyListeners) if (l.type === 'keydown') l.fn(e); return e; };
+  t.deliver = value => { t.attr = JSON.stringify(value); for (const l of t.docListeners) l.fn(); };
+  t.fireFallback = () => { for (const tm of t.timers) if (tm.ms === 3000 && !tm.cleared) tm.fn(); };
+  return t;
+}
+let pc = pendingContext();
+pc.press(); assert.equal(pc.breaks, 1, 'newline works before settings arrive');
+assert.equal(pc.press({ ctrlKey: true }).prevented, true); assert.equal(pc.sends, 0, 'no send before settings arrive');
+pc.deliver({ enabled: true, send: 'Ctrl+Enter', newline: 'Enter' });
+pc.press({ ctrlKey: true }); assert.equal(pc.sends, 1, 'send works once settings arrive');
+pc.fireFallback(); // already cleared: no effect
+pc = pendingContext();
+pc.press({ ctrlKey: true }); assert.equal(pc.sends, 0);
+pc.fireFallback();
+pc.press({ ctrlKey: true }); assert.equal(pc.sends, 1, 'fallback to defaults when settings never arrive');
+pc = pendingContext();
+pc.deliver({ enabled: false, send: 'Ctrl+Enter', newline: 'Enter' });
+assert.equal(pc.press().prevented, undefined, 'stored "disabled" applies as soon as it arrives');
+
+console.log('PASS: newline, send, repeat, IME, timing, modifiers, scope, disabled/ambiguous send, send scoped to editor, slash/mention menu Enter passthrough, no send before settings load + 3s fallback, duplicate install, incompatible API, teardown');

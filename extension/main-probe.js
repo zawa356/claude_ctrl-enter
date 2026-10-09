@@ -9,11 +9,17 @@
   const states = new WeakMap();
   const defaults = { enabled: true, send: 'Ctrl+Enter', newline: 'Enter' };
   let settings = defaults;
+  // Until badge.js delivers the stored settings, run on defaults but never send: the stored layout
+  // may differ (e.g. disabled, or another send key). If nothing arrives, fall back to defaults.
+  let ready = false;
+  const readyTimer = setTimeout(() => { ready = true; }, 3000);
   const readSettings = () => {
     try {
       const value = JSON.parse(document.documentElement.getAttribute('data-claude-enter-settings'));
       const keys = ['Enter', 'Ctrl+Enter', 'Shift+Enter', 'Alt+Enter'];
-      if (value && typeof value.enabled === 'boolean' && keys.includes(value.send) && keys.includes(value.newline) && value.send !== value.newline) settings = value;
+      if (value && typeof value.enabled === 'boolean' && keys.includes(value.send) && keys.includes(value.newline) && value.send !== value.newline) {
+        settings = value; ready = true; clearTimeout(readyTimer);
+      }
     } catch {}
   };
   readSettings();
@@ -87,7 +93,7 @@
     }
     e.preventDefault();
     e.stopImmediatePropagation();
-    if (e.repeat) return;
+    if (e.repeat || (action === 'send' && !ready)) return;
     if (!compatible(el)) { status('unsupported'); return; }
     try {
       if (action === 'send') {
@@ -111,7 +117,7 @@
     status(!settings.enabled ? 'disabled' : el ? (compatible(el) ? 'active' : 'unsupported') : 'waiting');
     if (!el && ++attempts < 240) timer = setTimeout(check, 500);
   };
-  controller.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
+  controller.signal.addEventListener('abort', () => { clearTimeout(timer); clearTimeout(readyTimer); }, { once: true });
   document.addEventListener('claude-enter-settings-changed', () => { readSettings(); clearTimeout(timer); check(); }, { signal: controller.signal });
   check();
 })();
