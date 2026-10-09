@@ -53,3 +53,6 @@ test-results/
 
 # ===== Local Claude Code settings =====
 .claude/settings.local.json
+
+# ===== Test screenshots =====
+settings-preview.png

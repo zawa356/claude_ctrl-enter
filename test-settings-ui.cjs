@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
   const browser = await chromium.launch({ channel: 'msedge', headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1100, height: 760 } });
-    await page.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><body style="margin:0;font-family:Arial"><aside data-testid="sidebar" style="width:280px;height:100vh;display:flex;flex-direction:column;background:#f7f7f5"><div style="flex:1;padding:20px">Claude — sidebar fixture</div><div class="df-bottom-tray"><div class="df-footer-row" style="display:flex"><div style="flex:1"><button data-testid="user-menu-button">Profile</button></div><button>Other</button></div></div></aside></body></html>' }));
+    await page.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;font-family:Arial"><aside data-testid="sidebar" style="width:280px;height:100vh;display:flex;flex-direction:column;background:#f7f7f5"><div style="flex:1;padding:20px">Claude — sidebar fixture</div><div class="df-bottom-tray"><div class="df-footer-row" style="display:flex"><div style="flex:1"><button data-testid="user-menu-button">Profile</button></div><button>Other</button></div></div></aside></body></html>' }));
     await page.goto('https://claude.ai/new');
     await page.evaluate(() => {
       window.chrome.storage = {
