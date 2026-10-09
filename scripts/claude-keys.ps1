@@ -17,6 +17,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
+# PowerShell 7 から起動された Windows PowerShell 5.1 は 7 用の PSModulePath を引き継ぎ、標準コマンド
+# （Get-FileHash 等）が見つからなくなる。この実行に限りシステム既定のモジュールパスへ戻す。
+if ($PSVersionTable.PSVersion.Major -le 5) {
+    $env:PSModulePath = (@([Environment]::GetEnvironmentVariable('PSModulePath', 'User'), [Environment]::GetEnvironmentVariable('PSModulePath', 'Machine')) | Where-Object { $_ }) -join ';'
+}
 
 # ---- 固定値（変更すると既存利用者の設定・解除互換が失われる。docs/AISTATE.md DEC-04 参照）----
 $ExtensionId    = 'fmkadmapgofadopljbjfkapdkoienihi'   # Claude が REACT_PROFILE=1 で読み込むフォルダー名
@@ -43,6 +48,11 @@ function Get-VirtualUserData($Package) {
     if (!$Package -or !$Package.PSObject.Properties['PackageFamilyName'] -or !$Package.PackageFamilyName) { return $null }
     $local = if ($Sandbox) { Join-Path $Sandbox 'AppData\Local' } else { $env:LOCALAPPDATA }
     Join-Path $local "Packages\$($Package.PackageFamilyName)\LocalCache\Roaming\Claude"
+}
+
+function Get-Sha256([string]$Path) {
+    $sha = [Security.Cryptography.SHA256]::Create(); $stream = [IO.File]::OpenRead($Path)
+    try { [BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '' } finally { $stream.Dispose(); $sha.Dispose() }
 }
 
 function Step([string]$Name) { if ($FailAt -eq $Name) { throw "テスト用の故意の失敗: $Name" } }
@@ -208,7 +218,7 @@ function Invoke-Install {
         foreach ($file in $files) {
             $dest = Join-Path $staging $file.Name
             Copy-Item -LiteralPath $file.FullName -Destination $dest
-            if ((Get-FileHash -LiteralPath $dest).Hash -ne (Get-FileHash -LiteralPath $file.FullName).Hash) { throw "コピーの検証に失敗: $($file.Name)" }
+            if ((Get-Sha256 $dest) -ne (Get-Sha256 $file.FullName)) { throw "コピーの検証に失敗: $($file.Name)" }
         }
         Write-Json (Join-Path $staging $MarkerFile) ([pscustomobject]@{ tool = 'claude-keys'; schema = 1; version = $manifest.version; installedAt = [DateTime]::UtcNow.ToString('o') })
         Step 'copy'

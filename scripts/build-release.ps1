@@ -6,6 +6,10 @@
 param([switch]$AllowDirty)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
+function Get-Sha256([string]$Path) { # not Get-FileHash: missing when 5.1 is launched from PowerShell 7
+    $sha = [Security.Cryptography.SHA256]::Create(); $s = [IO.File]::OpenRead($Path)
+    try { ([BitConverter]::ToString($sha.ComputeHash($s)) -replace '-', '').ToLower() } finally { $s.Dispose(); $sha.Dispose() }
+}
 
 $root = Split-Path -Parent $PSScriptRoot
 $manifest = Get-Content -LiteralPath (Join-Path $root 'extension\manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -38,7 +42,7 @@ try {
         $file = Join-Path $root ($rel -replace '/', '\')
         if (!(Test-Path -LiteralPath $file)) { throw "Missing release file: $rel" }
         [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file, "$name/$rel", [System.IO.Compression.CompressionLevel]::Optimal)
-        [void]$sums.AppendFormat("{0}  {1}`n", (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLower(), $rel)
+        [void]$sums.AppendFormat("{0}  {1}`n", (Get-Sha256 $file), $rel)
     }
     # Per-file checksums inside the ZIP, so users can verify an extracted copy.
     $entry = $zip.CreateEntry("$name/SHA256SUMS.txt")
@@ -46,7 +50,7 @@ try {
     try { $writer.Write($sums.ToString()) } finally { $writer.Dispose() }
 } finally { $zip.Dispose() }
 
-$zipHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLower()
+$zipHash = Get-Sha256 $zipPath
 [IO.File]::WriteAllText((Join-Path $dist 'SHA256SUMS.txt'), "$zipHash  $name.zip`n", (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "Built $zipPath"
 Write-Host "SHA256 $zipHash"
