@@ -24,6 +24,18 @@
     return states.get(el);
   };
   const compatible = el => typeof el?.editor?.commands?.setHardBreak === 'function';
+  // Find the send button that belongs to this editor: the nearest ancestor holding exactly one
+  // visible send button, and no other editor. Anything ambiguous returns null (no send).
+  const sendButtonFor = el => {
+    for (let node = el.parentElement; node; node = node.parentElement) {
+      const buttons = [...node.querySelectorAll('button[data-testid="chat-input-send"]')]
+        .filter(b => b.getClientRects().length > 0);
+      if (!buttons.length) continue;
+      if (buttons.length > 1 || [...node.querySelectorAll(selector)].some(other => other !== el)) return null;
+      return buttons[0];
+    }
+    return null;
+  };
   window.addEventListener('compositionstart', e => {
     const el = input(e);
     if (el) stateFor(el).composing = true;
@@ -68,10 +80,8 @@
     if (!compatible(el)) { status('unsupported'); return; }
     try {
       if (action === 'send') {
-        const buttons = [...document.querySelectorAll('button[data-testid="chat-input-send"]')]
-          .filter(b => b.getClientRects().length > 0);
-        if (buttons.length !== 1) { status('send-unavailable'); return; }
-        const button = buttons[0];
+        const button = sendButtonFor(el);
+        if (!button) { status('send-unavailable'); return; }
         if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
         button.click();
       } else if (editor.commands.setHardBreak() !== true) {

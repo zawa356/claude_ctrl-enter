@@ -12,6 +12,9 @@ editor.isEditor = true;
 editor.editor = { commands: { setHardBreak: () => { breaks++; return true; } }, view: {} };
 const button = { disabled: false, getClientRects: () => [1], getAttribute: () => null, click: () => sends++ };
 let buttons = [button];
+let editors = [editor];
+// The composer that holds the editor and its send button (send-button lookup walks up from the editor).
+editor.parentElement = { parentElement: null, querySelectorAll: s => s.includes('chat-input-send') ? buttons : editors };
 const listeners = [];
 const window = { addEventListener: (type, fn, options) => listeners.push({ type, fn, options }) };
 window.top = window;
@@ -45,6 +48,10 @@ button.disabled = true; event('keydown', { ctrlKey: true }); assert.equal(sends,
 button.disabled = false; buttons = [button, button]; event('keydown', { ctrlKey: true }); assert.equal(sends, 1);
 assert.equal(status, 'send-unavailable');
 buttons = [button];
+// Another editor sharing the same nearest send button: ambiguous, so never send.
+editors = [editor, new Element()]; event('keydown', { ctrlKey: true }); assert.equal(sends, 1);
+assert.equal(status, 'send-unavailable');
+editors = [editor];
 vm.runInContext(code, context); event('keydown'); assert.equal(breaks, 3);
 const command = editor.editor.commands.setHardBreak;
 delete editor.editor.commands.setHardBreak;
@@ -65,4 +72,4 @@ assert.equal(event('keydown').prevented, true); assert.equal(sends, 2);
 configure({ enabled:true, send:'Enter', newline:'Enter' });
 event('keydown'); assert.equal(sends, 2);
 window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, 4);
-console.log('PASS: newline, send, repeat, IME, timing, modifiers, scope, disabled/ambiguous send, duplicate install, incompatible API, teardown');
+console.log('PASS: newline, send, repeat, IME, timing, modifiers, scope, disabled/ambiguous send, send scoped to editor, duplicate install, incompatible API, teardown');

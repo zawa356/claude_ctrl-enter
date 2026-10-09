@@ -18,6 +18,10 @@ const fixture = `<!doctype html><html><head><meta charset="utf-8"></head><body s
   <div id="editor" class="tiptap ProseMirror" contenteditable="true" style="border:1px solid #888;min-height:60px"></div>
   <button data-testid="chat-input-send" type="button">Send</button>
 </main>
+<section style="width:300px;padding:20px">
+  <!-- A second editor (e.g. editing an earlier message) with no send button of its own. -->
+  <div id="other" class="tiptap ProseMirror" contenteditable="true" style="border:1px solid #888;min-height:60px"></div>
+</section>
 <script>
   window.log = [];
   const el = document.getElementById('editor');
@@ -26,6 +30,7 @@ const fixture = `<!doctype html><html><head><meta charset="utf-8"></head><body s
   el.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) { e.preventDefault(); log.push('app-send'); }
   });
+  document.getElementById('other').editor = { commands: { setHardBreak: () => { log.push('other-newline'); return true; } }, view: {} };
   document.querySelector('[data-testid="chat-input-send"]').addEventListener('click', () => log.push('click-send'));
 </script></body></html>`;
 
@@ -63,9 +68,9 @@ const storageMock = () => {
       await page.addScriptTag({ content: read('badge.js') });
       await page.waitForFunction(() => document.documentElement.hasAttribute('data-claude-enter-settings'));
     };
-    const press = async key => {
+    const press = async (key, target = '#editor') => {
       await page.evaluate(() => { window.log = []; });
-      await page.locator('#editor').focus();
+      await page.locator(target).focus();
       await page.keyboard.press(key);
       return page.evaluate(() => window.log);
     };
@@ -84,6 +89,10 @@ const storageMock = () => {
     assert.deepEqual(await press('Enter'), ['newline']);
     assert.deepEqual(await press('Control+Enter'), ['click-send']);
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-claude-enter-probe-main')), 'active');
+    // Ctrl+Enter in another editor must not press the main composer's send button.
+    assert.deepEqual(await press('Control+Enter', '#other'), []);
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-claude-enter-probe-main')), 'send-unavailable');
+    assert.deepEqual(await press('Enter', '#other'), ['other-newline']);
 
     // Disable from the UI: Claude's default behavior comes back immediately.
     await save({ enabled: false, send: 'Ctrl+Enter', newline: 'Enter' });
@@ -108,6 +117,6 @@ const storageMock = () => {
     await page.getByRole('button', { name: '閉じる', exact: true }).click();
     assert.deepEqual(await press('Enter'), ['click-send']);
 
-    console.log('PASS: UI<->key bridge, disable/enable, remap, unassigned swallow, reload restore, save failure');
+    console.log('PASS: UI<->key bridge, send scoped to its editor, disable/enable, remap, unassigned swallow, reload restore, save failure');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
