@@ -23,8 +23,20 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - run: npm test
 
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Key handling and the Linux installer only; the PowerShell installer and Edge-based UI tests run on Windows.
+      - run: node tests/keyboard.test.cjs
+      - run: node tests/installer-sh.test.cjs
+      - run: bash -n scripts/claude-keys.sh
+
   release:
-    needs: test
+    needs: [test, test-linux]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     permissions:

@@ -15,7 +15,7 @@ if ($package.version -ne $version) { throw "Version mismatch: manifest.json $ver
 $changelog = Get-Content -LiteralPath (Join-Path $root 'CHANGELOG.md') -Raw -Encoding UTF8
 if ($changelog -notmatch "(?m)^## \[$([regex]::Escape($version))\]") { throw "CHANGELOG.md has no '## [$version]' section." }
 
-$include = @('install.bat', 'uninstall.bat', 'diagnose.bat', 'scripts/claude-keys.ps1', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md', 'PRIVACY.md') +
+$include = @('install.bat', 'uninstall.bat', 'diagnose.bat', 'scripts/claude-keys.ps1', 'install.sh', 'uninstall.sh', 'diagnose.sh', 'scripts/claude-keys.sh', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md', 'PRIVACY.md') +
     @(Get-ChildItem -LiteralPath (Join-Path $root 'extension') -File | ForEach-Object { "extension/$($_.Name)" })
 
 if (!$AllowDirty -and (Get-Command git -ErrorAction SilentlyContinue)) {

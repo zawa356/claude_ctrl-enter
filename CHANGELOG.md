@@ -21,6 +21,7 @@
   - 試作版 0.2.0 からの更新に対応。拡張フォルダーの場所を変えないため、保存済みのキー設定は引き継がれる。
   - 試作版と違い、`developer_settings.json`（開発者モード）を必須にしない（開発者モード無しで読み込まれることを実機で確認）。
   - MSIX の仮想化で Claude の設定が `%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Roaming\Claude` に置かれている環境も診断する。そこに同じIDの拡張（本物の React DevTools など）があれば導入しない。
+- Linux 版（`install.sh` / `uninstall.sh` / `diagnose.sh`、`scripts/claude-keys.sh`）。Claude Desktop ベータ（Debian / Ubuntu）向け。**実機未確認**（自動テストのみ）。
 - 配布用 ZIP と SHA256 を作る `scripts/build-release.ps1`。
 - テスト（キー処理・インストーラー・設定画面・連携）と GitHub Actions。
 - 日本語・英語の README。

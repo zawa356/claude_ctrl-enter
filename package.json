@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "npm run test:keyboard && npm run test:installer && npm run test:ui",
-    "test:installer": "node tests/installer.test.cjs",
+    "test:installer": "node tests/installer.test.cjs && node tests/installer-sh.test.cjs",
     "test:keyboard": "node tests/keyboard.test.cjs",
     "test:ui": "node tests/settings-ui.test.cjs && node tests/integration.test.cjs"
   },

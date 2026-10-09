@@ -29,6 +29,7 @@ Claude Desktop 内の拡張用ストレージ（`chrome.storage.local`）に、�
 - `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\`（拡張のファイル）
 - ユーザー環境変数 `REACT_PROFILE`
 - `%LOCALAPPDATA%\ClaudeKeys\`（導入記録 `state.json` と、更新・解除時に移した旧ファイル）
+- Linux では `~/.config/Claude/extensions/fmkadmapgofadopljbjfkapdkoienihi/`、`~/.config/environment.d/90-claude-ctrl-enter.conf`（`REACT_PROFILE=1` のみ）、`~/.local/state/claude-keys/`
 
 ## English
 
@@ -36,7 +37,7 @@ This tool (extension and scripts) does **not collect or transmit** personal data
 
 The extension stores only three values in Claude Desktop's extension storage (`chrome.storage.local`): enabled/disabled, the send key and the newline key. Its only permission is `storage`, and it runs only on `https://claude.ai/*`. It inspects the input box state (for example, whether IME composition is in progress) to decide how to handle a key, but never reads or records the text.
 
-The scripts change or create: the extension folder `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\`, the user environment variable `REACT_PROFILE`, and `%LOCALAPPDATA%\ClaudeKeys\` (install record `state.json` and files moved aside on update/uninstall).
+The scripts change or create: the extension folder `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\`, the user environment variable `REACT_PROFILE`, and `%LOCALAPPDATA%\ClaudeKeys\` (install record `state.json` and files moved aside on update/uninstall). On Linux: `~/.config/Claude/extensions/fmkadmapgofadopljbjfkapdkoienihi/`, `~/.config/environment.d/90-claude-ctrl-enter.conf` (only `REACT_PROFILE=1`) and `~/.local/state/claude-keys/`.
 
 ## お問い合わせ / Contact
 

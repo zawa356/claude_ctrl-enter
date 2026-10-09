@@ -2,7 +2,7 @@
 
 [日本語](README.md) | **English**
 
-An unofficial tool that makes **Enter insert a newline and Ctrl+Enter send** in Claude Desktop for Windows.
+An unofficial tool that makes **Enter insert a newline and Ctrl+Enter send** in Claude Desktop (Windows and Linux).
 The Enter that confirms Japanese (and other) IME conversion never sends a message. Key bindings can be changed from inside Claude.
 
 > [!IMPORTANT]
@@ -11,6 +11,8 @@ The Enter that confirms Japanese (and other) IME conversion never sends a messag
 
 ## Quick start
 
+### Windows
+
 1. Download the latest `claude-ctrl-enter-<version>.zip` from [Releases](https://github.com/zawa356/claude_ctrl-enter/releases) and extract it anywhere.
 2. Double-click **`install.bat`** in the extracted folder.
    After the diagnostic output, it asks `続行しますか？ (Y/N)` ("Continue?"). Type `Y`.
@@ -18,9 +20,20 @@ The Enter that confirms Japanese (and other) IME conversion never sends a messag
 4. Done when **"⌨ キー設定　有効"** ("Key settings — enabled") appears above your profile in the left sidebar.
 
 > [!NOTE]
-> If Windows shows a warning such as "Windows protected your PC", see the [FAQ](#faq).
+> When run from a downloaded ZIP, Windows shows "Open File - Security Warning (The publisher could not be verified)". Click **Run**. See the [FAQ](#faq).
 
 To revert, double-click **`uninstall.bat`**, then fully quit and restart Claude.
+
+### Linux (not yet verified on a real machine)
+
+> [!WARNING]
+> Behavior with the Claude Desktop beta for Linux has not been verified on a real machine yet; the script is covered by automated tests only. Reports are welcome.
+
+1. Extract the ZIP and run `bash install.sh` in that folder. Type `y` to install.
+2. **Log out and log back in** (so the environment variable takes effect), then start Claude.
+3. Done when "⌨ キー設定　有効" appears in the left sidebar.
+
+To revert, run `bash uninstall.sh` and log in again. Diagnostics: `bash diagnose.sh`.
 
 ## Features
 
@@ -41,10 +54,12 @@ The UI and installer messages are currently in Japanese only.
 
 | Item | Details |
 | --- | --- |
-| OS | Windows 10 / 11 |
-| Claude | Claude Desktop for Windows (MSIX package) |
-| Tested versions | 2.26454.2, 2.31226.0 |
-| Needs | Windows PowerShell 5.1 (built into Windows). No administrator rights |
+| OS | Windows 10 / 11; Linux (Debian / Ubuntu running the Claude Desktop beta — not yet verified) |
+| Claude | Windows: Claude Desktop (MSIX package). Linux: Claude Desktop beta |
+| Tested versions | Windows 2.26454.2, 2.31226.0 |
+| Needs | Windows: Windows PowerShell 5.1 (built in). Linux: bash and coreutils. No administrator/root rights |
+
+macOS is not supported (no test machine available).
 
 Untested versions only produce a warning in the diagnostics; installation still proceeds. Uninstall if it does not work.
 
@@ -55,11 +70,11 @@ This tool places a small key-handling extension at that location.
 
 Installation changes exactly three things:
 
-| Change | Location |
-| --- | --- |
-| Extension files | `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\` |
-| User environment variable | `REACT_PROFILE=1` |
-| Install record and backups | `%LOCALAPPDATA%\ClaudeKeys\` |
+| Change | Windows | Linux |
+| --- | --- | --- |
+| Extension files | `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\` | `~/.config/Claude/extensions/fmkadmapgofadopljbjfkapdkoienihi/` |
+| `REACT_PROFILE=1` | User environment variable | `~/.config/environment.d/90-claude-ctrl-enter.conf` (a dedicated file; existing files such as `~/.profile` are never edited) |
+| Install record and backups | `%LOCALAPPDATA%\ClaudeKeys\` | `~/.local/state/claude-keys/` |
 
 Notes:
 
@@ -90,9 +105,10 @@ Status shown next to "キー設定" in the sidebar:
 
 ## FAQ
 
-**Windows shows a warning and blocks the script**
-Windows marks files from a downloaded ZIP as coming from the internet. Before extracting, right-click the ZIP → *Properties* → check *Unblock* → *OK*, then extract again.
-All scripts are plain text, so you can read them before running.
+**"Open File - Security Warning" appears**
+Windows marks files from a downloaded ZIP as coming from the internet, so running the .bat asks "The publisher could not be verified. Are you sure you want to run this software?". Click **Run** if you trust it.
+To avoid the prompt, right-click the ZIP *before* extracting → *Properties* → check *Unblock* → *OK*, then extract.
+All scripts are plain text, so you can read them before running (they are not signed).
 
 **After a Claude update, "キー設定" disappeared or shows 非対応**
 Claude's internals may have changed. Please open an Issue with the output of `diagnose.bat`. Meanwhile, `uninstall.bat` restores the default behavior.
@@ -116,7 +132,7 @@ npm test           # key handling, installer, settings UI and integration tests
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   # builds the release ZIP in dist\
 ```
 
-- Layout: `extension/` (the extension), `scripts/claude-keys.ps1` (install/update/uninstall/diagnose), `tests/`, `legacy/` (prototype 0.2.0 and its scripts, kept for compatibility testing).
+- Layout: `extension/` (the extension), `scripts/claude-keys.ps1` / `scripts/claude-keys.sh` (install/update/uninstall/diagnose for Windows / Linux), `tests/`, `legacy/` (prototype 0.2.0 and its scripts, kept for compatibility testing).
 - History, design decisions and verification records are in [docs/AISTATE.md](docs/AISTATE.md) (a log written for AI agents) and [docs/AI_HANDOFF_JA.md](docs/AI_HANDOFF_JA.md) (Japanese). AI coding agents should read [AGENTS.md](AGENTS.md).
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute.
 
