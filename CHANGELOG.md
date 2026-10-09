@@ -8,6 +8,20 @@
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-10-09
+
+0.4.2 で「Multiple installations found」と表示されて導入できなかった問題を直した版です。同梱する共通ローダー claude-desktop-webext を v0.2.1 に更新しました。キー操作の機能は変わりません。
+
+### Fixed
+- Claude Code（VS Code 拡張や、Claude Desktop のコード機能が起動する `claude.exe`）を Claude Desktop の別のインストールと誤って判定し、導入が止まる問題を修正しました。
+- 従来のインストーラー版で、更新前の版のフォルダーが残っていると、Claude を終了しているときに導入が止まる問題を修正しました。
+
+### Changed
+- 同梱する共通ローダーを v0.2.1 に固定しました。
+
+### Verified
+- Windows・Claude 2.31226（MSIX、仮想化されたデータフォルダーのみ）で、Claude Code が起動中でも診断で候補が1つになり、問題が出ないことを確認しました。この版での導入・再起動は実機で未確認です。
+
 ## [0.4.2] - 2026-10-09
 
 同梱する共通ローダー claude-desktop-webext を v0.2.0 に更新した版です。キー操作の機能は変わりません。

@@ -206,6 +206,9 @@ p = sandbox();
 check(run(p, 'install', ['-ClaudePath', path.join(p.root, 'missing.exe')]), 1);
 assert.ok(!exists(p.target));
 const customDir = path.join(p.root, 'custom Claude');
-fs.mkdirSync(customDir);
+fs.mkdirSync(path.join(customDir, 'resources'), { recursive: true });
 fs.writeFileSync(path.join(customDir, 'claude.exe'), 'fixture');
+// Without app.asar next to it, a claude.exe is not Claude Desktop (e.g. the Claude Code CLI).
+check(run(p, 'install', ['-ClaudePath', customDir]), 1);
+fs.writeFileSync(path.join(customDir, 'resources', 'app.asar'), 'fixture');
 check(run(p, 'install', ['-ClaudePath', customDir]), 0);
