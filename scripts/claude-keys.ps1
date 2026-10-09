@@ -22,7 +22,7 @@ Set-StrictMode -Version 2.0
 $ExtensionId    = 'fmkadmapgofadopljbjfkapdkoienihi'   # Claude が REACT_PROFILE=1 で読み込むフォルダー名
 $LegacyName     = 'Claude Enter Patch - Load Probe'    # 0.2.0 までの manifest name
 $MarkerFile     = 'claude-keys.owner.json'             # このツールが置いたことを示す印
-$TestedVersions = @('2.26454.2.0')
+$TestedVersions = @('2.26454.2.0', '2.31226.0.0')
 $SourceDir      = Join-Path (Split-Path -Parent $PSScriptRoot) 'extension'
 
 if ($Sandbox) {
