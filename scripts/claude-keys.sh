@@ -138,7 +138,8 @@ confirm() {
 }
 
 env_set_by_us() {
-    if [ -f "$STATE_FILE" ]; then [ "$(json_get "$STATE_FILE" envSetByUs)" = true ]; return; fi
+    # 解除済み（removed）の記録は、その後に入れ直された状態を表さないので使わない。
+    if [ -f "$STATE_FILE" ] && [ "$(json_get "$STATE_FILE" status)" != removed ]; then [ "$(json_get "$STATE_FILE" envSetByUs)" = true ]; return; fi
     [ -f "$ENV_FILE" ]
 }
 

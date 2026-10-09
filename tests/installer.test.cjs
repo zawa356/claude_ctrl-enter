@@ -86,6 +86,19 @@ assert.equal(json(p.legacyState).status, 'installed', 'legacy state file is left
 check(run(p, 'uninstall'), 0);
 assert.equal(userEnv(p), null);
 
+// 4b. Our install was removed, then the 0.2.0 prototype was installed again: the stale "removed" record
+// must not hide that the prototype set REACT_PROFILE.
+p = sandbox();
+check(run(p, 'install'), 0); check(run(p, 'uninstall'), 0);
+placeLegacy(p);
+fs.mkdirSync(path.dirname(p.legacyState), { recursive: true });
+fs.writeFileSync(p.legacyState, JSON.stringify({ version: 1, hadValue: false, status: 'installed' }));
+setEnv(p, 'User', '1');
+check(run(p, 'install'), 0);
+assert.equal(json(p.state).envSetByUs, true);
+check(run(p, 'uninstall'), 0);
+assert.equal(userEnv(p), null);
+
 // 5. REACT_PROFILE=1 already set by the user: install keeps it, uninstall leaves it.
 p = sandbox();
 setEnv(p, 'User', '1');

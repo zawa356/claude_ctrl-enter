@@ -178,8 +178,9 @@ function Confirm-Action([string]$Message) {
 
 # 環境変数を「このツールが設定した」と言えるか。言えない場合、解除時に環境変数を残す（安全側）。
 function Get-EnvSetByUs {
+    # 解除済み（removed）の記録は、その後に試作版などで入れ直された状態を表さないので使わない。
     $state = Read-Json $StateFile
-    if ($state) { return [bool](Get-Prop $state 'envSetByUs') }
+    if ($state -and (Get-Prop $state 'status') -ne 'removed') { return [bool](Get-Prop $state 'envSetByUs') }
     $legacy = Read-Json (Join-Path $LegacyStateRoot 'state.json')
     if ($legacy -and (Get-Prop $legacy 'hadValue') -eq $false -and (Get-Prop $legacy 'status') -eq 'installed') { return $true }
     $false
