@@ -5,7 +5,7 @@
 - Windows 10 / 11、Windows PowerShell 5.1
 - `git clone --recurse-submodules`（または clone 後に `git submodule update --init`）。共通ローダーを `vendor/claude-desktop-webext` に置いています。
 - Node.js 20 以上（テスト用）。`npm install` で Playwright を取得します。ブラウザーは Windows 標準の Microsoft Edge を使います。
-- Git for Windows（Git Bash）。Linux 版スクリプトのテストに使います（無い場合はスキップ）。Linux 版の変更は `scripts/claude-keys.ps1` と挙動をそろえてください。
+- Git for Windows（Git Bash）と python3（3.8 以上）。Linux 版スクリプトのテストに使います（無い場合はスキップ。CI の Linux では必ず実行されます）。Linux 版の変更は `scripts/claude-keys.ps1` と挙動をそろえてください。
 - エディターは `.editorconfig` 対応のものを推奨します。
   - `*.ps1` は **UTF-8（BOM付き）・CRLF**。BOM が無いと PowerShell 5.1 で日本語が化けます。
   - `*.bat` は CRLF。
@@ -23,6 +23,7 @@
 
 - Claude 本体（`claude.exe`、`app.asar`、`C:\Program Files\WindowsApps` 配下）や署名・権限を変更しないこと。
 - インストーラーは bat + ps1（Windows）と bash（Linux）だけで完結させること。exe 化、コード署名の必須化、外部からのダウンロード、管理者権限、実行ポリシーの恒久変更は行わないこと。
+- 導入先の管理は共通ローダー（`vendor/claude-desktop-webext`）が行います。ローダー本体の修正は https://github.com/zawa356/claude-desktop-webext で行い、ここでは submodule の参照先を更新すること。動作確認済みの Claude の版は `desktop-webext.json` の `testedClaudeVersions` に追記すること。
 - 拡張の導入先フォルダー（`extensions\fmkadmapgofadopljbjfkapdkoienihi`）を変えないこと。拡張 ID はこのフォルダーのパスから計算されるため、変えると利用者の設定が失われます。`manifest.json` に `key` を追加することも同じ理由で禁止です。
 - 権限は最小限に。外部通信やリモートコードの読み込みはしないこと。データの扱いを変える場合は [PRIVACY.md](PRIVACY.md) も更新すること。
 - キー処理では、IME 変換中の Enter と、誤送信につながる動作に特に注意すること。判断に迷う場合は「送信しない」側に倒すこと。
@@ -35,7 +36,7 @@
 
 1. `extension/manifest.json` と `package.json` の `version` を更新します。
 2. `CHANGELOG.md` の `Unreleased` を `## [x.y.z] - YYYY-MM-DD` に変更します。
-3. コミットしてタグを作成し、push します（例: `git tag v0.3.0 && git push origin v0.3.0`）。
+3. コミットしてタグを作成し、push します（例: `git tag v0.4.1` のあと `git push origin v0.4.1`。Windows PowerShell 5.1 では `&&` が使えないので1行ずつ実行します）。
    GitHub Actions がテストを実行し、配布用 ZIP と `SHA256SUMS.txt` を Release に添付します。
 4. 手元で作る場合は `scripts\build-release.ps1` を実行します（`dist\` に出力）。
 
@@ -43,6 +44,6 @@
 
 ## English summary
 
-Requirements: clone with `--recurse-submodules` (shared loader in `vendor/claude-desktop-webext`), Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`), Git Bash for the Linux installer test. Keep `*.ps1` as UTF-8 with BOM and CRLF, and keep `scripts/claude-keys.sh` behaving like `scripts/claude-keys.ps1`.
+Requirements: clone with `--recurse-submodules` (shared loader in `vendor/claude-desktop-webext`), Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`), Git Bash and python3 >= 3.8 for the Linux installer test. Fix loader issues upstream in claude-desktop-webext and bump the submodule here; tested Claude versions live in `desktop-webext.json`. Keep `*.ps1` as UTF-8 with BOM and CRLF, and keep `scripts/claude-keys.sh` behaving like `scripts/claude-keys.ps1`.
 Never modify Claude's own files, never change the extension install folder or add a manifest `key` (it would change the extension ID and lose users' settings), keep the installers as plain .bat + .ps1 (Windows) and bash (Linux), and when in doubt make key handling *not* send.
 Release: bump versions in `extension/manifest.json` and `package.json`, date the CHANGELOG section, then push a `vX.Y.Z` tag; CI builds the ZIP and attaches it to the GitHub Release.

@@ -47,6 +47,7 @@ Claude Desktop（Windows・Linux）で **Enter を改行、Ctrl+Enter を送信*
 - サイドバーの「キー設定」から、送信キーと改行キーを `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Alt+Enter` の中から選べます。
 - 「キー設定を有効にする」のチェックを外すと、Claude 標準の操作に戻ります（アンインストール不要）。
 - 設定は Claude を再起動しても、更新・再導入しても保持されます。
+- 同じ共通ローダーを使う他のツール（例：Chat / Cowork の切り替えを戻す [claude-split-ui](https://github.com/zawa356/claude-split-ui)）と同時に使えます（0.4.0 以降）。
 
 ## 動作環境
 
@@ -54,7 +55,7 @@ Claude Desktop（Windows・Linux）で **Enter を改行、Ctrl+Enter を送信*
 | --- | --- |
 | OS | Windows 10 / 11、Linux（Claude Desktop ベータが動く Debian / Ubuntu。実機未確認） |
 | Claude | Windows: Claude Desktop（MSIX パッケージ版）。Linux: Claude Desktop ベータ |
-| 動作確認済みの版 | Windows 版 2.26454.2、2.31226.0 |
+| 動作確認済みの版 | Windows 版 2.26454.2、2.31226.0（0.4.x は 2.31226.0 で確認） |
 | 必要なもの | Windows: Windows PowerShell 5.1（標準搭載）。Linux: bash と python3（3.8 以上。Ubuntu / Debian のデスクトップには標準搭載）。どちらも管理者権限は不要 |
 
 macOS には対応していません（確認できる環境がないため）。
@@ -117,8 +118,15 @@ Claude Desktop には、ユーザー環境変数 `REACT_PROFILE=1` が設定さ�
 **Claude を更新したら「キー設定」が消えた／非対応になった**
 Claude の内部の仕組みが変わった可能性があります。`diagnose.bat` の結果を添えて Issue で報告してください。当面は `uninstall.bat` で元に戻せます。
 
+**他のツール（claude-split-ui など）と一緒に使えますか？**
+はい。0.4.0 以降は共通ローダー [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext) を使うので、同じローダーを使うツールとは、どちらを先に入れても同時に使えます。Windows・Claude 2.31226 で claude-split-ui との併用を確認済みです。どちらかを解除しても、もう一方はそのまま動きます。
+
+**診断や導入の画面に英語が出る**
+0.4.0 から、導入の処理は共通ローダーが行います。ローダーの表示は英語です。`[NG  ]` の行が無ければ問題ありません。
+
 **キー設定が表示されない**
 Claude を「完全に」終了したか確認してください。ウィンドウを閉じただけでは、タスクトレイで動き続けていることがあります。
+別のツールが Claude の読み込むフォルダーを書き換えた場合も表示されなくなります。そのときは `install.bat` をもう一度実行すると、フォルダーが作り直されます。
 
 ## 既知の制限
 
@@ -127,18 +135,21 @@ Claude を「完全に」終了したか確認してください。ウィンド�
 - 過去のメッセージの編集欄では、送信キーで送信できない場合があります（誤送信を避けるため、どの送信ボタンか特定できないときは送信しません）。
 - `Enter` を押し続けても改行は 1 回だけです。
 - `%APPDATA%\Claude` フォルダーが存在しない環境では導入を中止します。
+- 共通ローダーの表示は英語です（このツールの案内は日本語）。
+- Linux 版の導入には python3（3.8 以上）が必要です。
 
 ## 開発者向け
 
 ```powershell
 git submodule update --init   # 共通ローダー（vendor/claude-desktop-webext）を取得
 npm install        # テスト用の Playwright を取得（ブラウザーは Windows 標準の Edge を使用）
-npm test           # キー処理・インストーラー（Windows / Linux）・設定画面・連携のテスト。Linux 用は Git Bash で実行（無ければスキップ）
+npm test           # キー処理・インストーラー（Windows / Linux）・設定画面・連携のテスト。Linux 用は Git Bash と python3 で実行（無ければスキップ）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   # dist\ に配布用 ZIP を作成
 ```
 
 - 構成: `extension/`（拡張本体）、`desktop-webext.json`（共通ローダーの設定）、`vendor/claude-desktop-webext/`（共通ローダー。git submodule）、`scripts/claude-keys.ps1` / `scripts/claude-keys.sh`（Windows / Linux の導入・更新・解除・診断）、`tests/`、`legacy/`（試作版 0.2.0 とその導入スクリプト。互換性の検証用）。
 - 開発の経緯・設計判断・検証記録は [docs/AISTATE.md](docs/AISTATE.md)（AI エージェント向けの記録）と [docs/AI_HANDOFF_JA.md](docs/AI_HANDOFF_JA.md) にあります。AI エージェントで開発する場合は [AGENTS.md](AGENTS.md) を参照してください。
+- 共通ローダー本体の修正・機能追加は [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext) で行い、このリポジトリでは submodule の参照先を更新します。
 - 貢献の方法は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
 ## ライセンス

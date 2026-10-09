@@ -47,8 +47,9 @@ To revert, run `bash uninstall.sh` and log in again. Diagnostics: `bash diagnose
 - From "キー設定" (Key settings) in the sidebar, choose the send key and newline key from `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Alt+Enter`.
 - Uncheck "キー設定を有効にする" (Enable key settings) to get Claude's default keys back without uninstalling.
 - Settings survive restarts, updates and reinstalls.
+- Works side by side with other tools that use the same shared loader, e.g. [claude-split-ui](https://github.com/zawa356/claude-split-ui), which restores the Chat / Cowork selector (0.4.0 and later).
 
-The UI and installer messages are currently in Japanese only.
+The UI and installer messages are in Japanese; the shared loader's output is in English.
 
 ## Requirements
 
@@ -56,7 +57,7 @@ The UI and installer messages are currently in Japanese only.
 | --- | --- |
 | OS | Windows 10 / 11; Linux (Debian / Ubuntu running the Claude Desktop beta — not yet verified) |
 | Claude | Windows: Claude Desktop (MSIX package). Linux: Claude Desktop beta |
-| Tested versions | Windows 2.26454.2, 2.31226.0 |
+| Tested versions | Windows 2.26454.2, 2.31226.0 (0.4.x checked on 2.31226.0) |
 | Needs | Windows: Windows PowerShell 5.1 (built in). Linux: bash and python3 ≥ 3.8 (preinstalled on Ubuntu / Debian desktops). No administrator/root rights |
 
 macOS is not supported (no test machine available).
@@ -119,8 +120,12 @@ All scripts are plain text, so you can read them before running (they are not si
 **After a Claude update, "キー設定" disappeared or shows 非対応**
 Claude's internals may have changed. Please open an Issue with the output of `diagnose.bat`. Meanwhile, `uninstall.bat` restores the default behavior.
 
+**Can I use it together with other tools such as claude-split-ui?**
+Yes. Since 0.4.0, installation goes through the shared loader [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext). Tools that use the same loader work together, whichever you install first. Using it together with claude-split-ui is verified on Windows with Claude 2.31226. Removing one of them leaves the other working.
+
 **"キー設定" does not appear**
 Make sure Claude was *fully* quit. Closing the window may leave it running in the system tray.
+If another tool overwrote the folder that Claude loads, run `install.bat` again; it regenerates the folder.
 
 ## Known limitations
 
@@ -129,18 +134,20 @@ Make sure Claude was *fully* quit. Closing the window may leave it running in th
 - In the editor for an earlier message, the send key may not send (when the matching send button cannot be identified, nothing is sent, to avoid sending the wrong text).
 - Holding Enter inserts only one newline.
 - Installation stops if the `%APPDATA%\Claude` folder does not exist.
+- The Linux installer needs python3 ≥ 3.8.
 
 ## For developers
 
 ```powershell
 git submodule update --init   # fetches the shared loader (vendor/claude-desktop-webext)
 npm install        # fetches Playwright for tests (uses the Edge installed with Windows)
-npm test           # key handling, installers (Windows / Linux), settings UI and integration tests. The Linux installer test uses Git Bash (skipped if missing)
+npm test           # key handling, installers (Windows / Linux), settings UI and integration tests. The Linux installer test uses Git Bash and python3 (skipped if missing)
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   # builds the release ZIP in dist\
 ```
 
 - Layout: `extension/` (the extension), `desktop-webext.json` (shared loader config), `vendor/claude-desktop-webext/` (shared loader, git submodule), `scripts/claude-keys.ps1` / `scripts/claude-keys.sh` (install/update/uninstall/diagnose for Windows / Linux), `tests/`, `legacy/` (prototype 0.2.0 and its scripts, kept for compatibility testing).
 - History, design decisions and verification records are in [docs/AISTATE.md](docs/AISTATE.md) (a log written for AI agents) and [docs/AI_HANDOFF_JA.md](docs/AI_HANDOFF_JA.md) (Japanese). AI coding agents should read [AGENTS.md](AGENTS.md).
+- Fix or extend the shared loader upstream in [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext), then bump the submodule here.
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute.
 
 ## License

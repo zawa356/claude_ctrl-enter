@@ -8,6 +8,24 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-09
+
+機能の変更はありません。ドキュメントの更新と、同梱する共通ローダーを正式版 v0.1.0 にした版です。
+
+### Changed
+
+- 同梱する共通ローダー claude-desktop-webext を v0.1.0 に固定しました。中身は 0.4.0 に同梱したものと同じ処理で、README と CHANGELOG が加わっています。
+- README（日本語・英語）を更新しました。
+  - claude-split-ui との併用
+  - ローダーの英語表示
+  - 別のツールに読み込み先フォルダーを書き換えられたときの直し方（`install.bat` の再実行）
+  - Linux で python3 が必要なこと
+- CONTRIBUTING を更新しました。ローダーの修正は上流のリポジトリで行うこと、動作確認済みの版は `desktop-webext.json` に書くこと、PowerShell 5.1 でも使えるタグ付けの例を載せています。
+
+### Verified
+
+- Windows・Claude 2.31226 で、0.4.0 の `install.bat` による更新を実機で確認しました。0.3.0 から移行した環境です。キー設定の表示と保存済みの設定が残り、Enter で改行、Ctrl+Enter で送信できました。claude-split-ui との併用も確認しました。
+
 ## [0.4.0] - 2026-10-09
 
 Claude Desktop が読み込める拡張は1つだけです。そのため 0.3.0 までは、同じ仕組みを使う他のツール（例：[claude-split-ui](https://github.com/zawa356/claude-split-ui)）と同時に使えませんでした。0.4.0 では、拡張フォルダーの管理を共通ローダー [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext) に任せ、他のツールと共存できるようにしました。
