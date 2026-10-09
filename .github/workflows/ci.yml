@@ -14,6 +14,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: true
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -27,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: true
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -34,6 +38,7 @@ jobs:
       - run: node tests/keyboard.test.cjs
       - run: node tests/installer-sh.test.cjs
       - run: bash -n scripts/claude-keys.sh
+      - run: python3 --version
 
   release:
     needs: [test, test-linux]
@@ -43,6 +48,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: true
       - name: Build release ZIP
         shell: powershell
         run: |

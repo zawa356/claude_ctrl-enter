@@ -55,7 +55,7 @@ Claude Desktop（Windows・Linux）で **Enter を改行、Ctrl+Enter を送信*
 | OS | Windows 10 / 11、Linux（Claude Desktop ベータが動く Debian / Ubuntu。実機未確認） |
 | Claude | Windows: Claude Desktop（MSIX パッケージ版）。Linux: Claude Desktop ベータ |
 | 動作確認済みの版 | Windows 版 2.26454.2、2.31226.0 |
-| 必要なもの | Windows: Windows PowerShell 5.1（標準搭載）。Linux: bash と coreutils。どちらも管理者権限は不要 |
+| 必要なもの | Windows: Windows PowerShell 5.1（標準搭載）。Linux: bash と python3（3.8 以上。Ubuntu / Debian のデスクトップには標準搭載）。どちらも管理者権限は不要 |
 
 macOS には対応していません（確認できる環境がないため）。
 
@@ -66,13 +66,19 @@ macOS には対応していません（確認できる環境がないため）�
 Claude Desktop には、ユーザー環境変数 `REACT_PROFILE=1` が設定されていると、開発者向けの React DevTools 拡張を Claude の設定フォルダーから読み込む仕組みがあります。
 このツールは、その読み込み先にキー操作用の小さな拡張を置きます。
 
-導入で変更されるのは次の 3 つだけです。
+読み込める拡張は1つだけなので、0.4.0 からは共通ローダー [claude-desktop-webext](https://github.com/zawa356/claude-desktop-webext) を使います（配布 ZIP に同梱）。ローダーは、同じ仕組みを使う他のツール（例：[claude-split-ui](https://github.com/zawa356/claude-split-ui)）の拡張とまとめて、読み込み先のフォルダーを作ります。そのため、それらのツールと同時に使えます。
+
+導入で変更されるのは次のものだけです。
 
 | 変更 | Windows | Linux |
 | --- | --- | --- |
-| 拡張のファイル | `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\` | `~/.config/Claude/extensions/fmkadmapgofadopljbjfkapdkoienihi/` |
-| 環境変数 `REACT_PROFILE=1` | ユーザー環境変数 | `~/.config/environment.d/90-claude-ctrl-enter.conf`（このツール専用のファイル。既存の `~/.profile` などは書き換えない） |
-| 導入記録とバックアップ | `%LOCALAPPDATA%\ClaudeKeys\` | `~/.local/state/claude-keys/` |
+| 拡張のファイル（本体） | `%LOCALAPPDATA%\ClaudeDesktopWebExt\web-extensions\claude-ctrl-enter\` | `~/.local/share/claude-desktop-webext/web-extensions/claude-ctrl-enter/` |
+| Claude が読み込むフォルダー（ローダーが作る） | `%APPDATA%\Claude\extensions\fmkadmapgofadopljbjfkapdkoienihi\` | `~/.config/Claude/extensions/fmkadmapgofadopljbjfkapdkoienihi/` |
+| 環境変数 `REACT_PROFILE=1` | ユーザー環境変数 | `~/.config/environment.d/90-claude-desktop-webext.conf`（ローダー専用のファイル。既存の `~/.profile` などは書き換えない） |
+| ローダーの記録とバックアップ | `%LOCALAPPDATA%\ClaudeDesktopWebExt\` | `~/.local/share/claude-desktop-webext/` |
+| このツールの記録 | `%LOCALAPPDATA%\ClaudeKeys\` | `~/.local/state/claude-keys/` |
+
+0.3.x 以前から更新すると、`install.bat` / `install.sh` が新しい方式へ自動で移行します。以前のフォルダーはバックアップへ移し、キーの設定は引き継がれます。移行した後は、0.3.x の `uninstall` は使えません（何もせずに中止します）。
 
 注意点:
 
@@ -82,8 +88,8 @@ Claude Desktop には、ユーザー環境変数 `REACT_PROFILE=1` が設定さ�
 
 ## 更新・解除
 
-- **更新**: 新しい版の ZIP を展開し、`install.bat` を実行します。以前のファイルは削除せず `%LOCALAPPDATA%\ClaudeKeys\backups\` に移します。キーの設定は引き継がれます。
-- **解除**: `uninstall.bat` を実行します。拡張のフォルダーはバックアップへ移し、このツールが設定した `REACT_PROFILE` を削除します。キーの設定は Claude 側に残るので、再導入すると元の設定に戻ります。
+- **更新**: 新しい版の ZIP を展開し、`install.bat` を実行します。以前のファイルは削除せず `%LOCALAPPDATA%\ClaudeDesktopWebExt\backups\` に移します。キーの設定は引き継がれます。
+- **解除**: `uninstall.bat` を実行します。拡張のファイルはバックアップへ移します。ローダーを使う他のツールが残っていなければ、ローダーが設定した `REACT_PROFILE` も削除します。キーの設定は Claude 側に残るので、再導入すると元の設定に戻ります。
 - どちらも、Claude を完全に終了して起動し直すと反映されます。スクリプトが Claude を終了させることはありません。
 - 途中で失敗した場合は、自動で元の状態に戻します。
 
@@ -125,12 +131,13 @@ Claude を「完全に」終了したか確認してください。ウィンド�
 ## 開発者向け
 
 ```powershell
+git submodule update --init   # 共通ローダー（vendor/claude-desktop-webext）を取得
 npm install        # テスト用の Playwright を取得（ブラウザーは Windows 標準の Edge を使用）
 npm test           # キー処理・インストーラー（Windows / Linux）・設定画面・連携のテスト。Linux 用は Git Bash で実行（無ければスキップ）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   # dist\ に配布用 ZIP を作成
 ```
 
-- 構成: `extension/`（拡張本体）、`scripts/claude-keys.ps1` / `scripts/claude-keys.sh`（Windows / Linux の導入・更新・解除・診断）、`tests/`、`legacy/`（試作版 0.2.0 とその導入スクリプト。互換性の検証用）。
+- 構成: `extension/`（拡張本体）、`desktop-webext.json`（共通ローダーの設定）、`vendor/claude-desktop-webext/`（共通ローダー。git submodule）、`scripts/claude-keys.ps1` / `scripts/claude-keys.sh`（Windows / Linux の導入・更新・解除・診断）、`tests/`、`legacy/`（試作版 0.2.0 とその導入スクリプト。互換性の検証用）。
 - 開発の経緯・設計判断・検証記録は [docs/AISTATE.md](docs/AISTATE.md)（AI エージェント向けの記録）と [docs/AI_HANDOFF_JA.md](docs/AI_HANDOFF_JA.md) にあります。AI エージェントで開発する場合は [AGENTS.md](AGENTS.md) を参照してください。
 - 貢献の方法は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 

@@ -40,6 +40,7 @@
 - ライセンスは MIT、著作者名は GitHub アカウント名 `zawa356`。公開範囲は「個人情報を含まないものすべて」（AI向け資料・引き継ぎ書も公開してよい）。
 - **ユーザーの本名（姓・名の一部、本名を含むメールアドレスも）をリポジトリ・コミットの作者情報・コミットメッセージ・AISTATE の記録に絶対に入れない。** 記録上は「real-name」と書く。作者は `zawa356`。テスト環境のパス `C:\Users\zawa\...` は公開してよい。
 - Claude本体、解析コピー、プロファイル、認証情報、会話ログ、ユーザー画面のスクリーンショット、組織ID等を含むClaudeの設定ファイルの中身をGitに含めない。
+- 0.4.0 から導入先の管理は共通ローダー（`vendor/claude-desktop-webext`、git submodule。`desktop-webext.json` が設定）。clone 後は `git submodule update --init`。`claude-keys.ps1` / `.sh` は移行判断と日本語案内だけの薄いラッパー。ローダー本体の修正は https://github.com/zawa356/claude-desktop-webext 側で行い、submodule を更新する。
 - ファイル構成: `extension/keys.js`（MAIN world、旧 main-probe.js）、`extension/settings-ui.js`（isolated、旧 badge.js）、`scripts/claude-keys.ps1`（Windows の導入・更新・解除・診断）、`scripts/claude-keys.sh`（Linux 版。実機未確認。ps1 と挙動を揃えること）、`scripts/build-release.ps1`（配布ZIP）、`tests/`、`legacy/`（試作版0.2.0と旧スクリプト。互換性検証用）。
 - 「Electronが対応する」と「このClaudeビルドで動く」を分ける。過去にデバッグ起動案がClaude独自の拒否処理で成立しないと判明した。
 - AIの模擬テストとユーザーの実機確認を区別して報告する。別バージョン対応や全IME対応を推測で宣言しない。

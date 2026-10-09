@@ -19,12 +19,16 @@ if ($package.version -ne $version) { throw "Version mismatch: manifest.json $ver
 $changelog = Get-Content -LiteralPath (Join-Path $root 'CHANGELOG.md') -Raw -Encoding UTF8
 if ($changelog -notmatch "(?m)^## \[$([regex]::Escape($version))\]") { throw "CHANGELOG.md has no '## [$version]' section." }
 
-$include = @('install.bat', 'uninstall.bat', 'diagnose.bat', 'scripts/claude-keys.ps1', 'install.sh', 'uninstall.sh', 'diagnose.sh', 'scripts/claude-keys.sh', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md', 'PRIVACY.md') +
+$include = @('install.bat', 'uninstall.bat', 'diagnose.bat', 'scripts/claude-keys.ps1', 'install.sh', 'uninstall.sh', 'diagnose.sh', 'scripts/claude-keys.sh', 'desktop-webext.json', 'README.md', 'README.en.md', 'LICENSE', 'CHANGELOG.md', 'PRIVACY.md') +
     @(Get-ChildItem -LiteralPath (Join-Path $root 'extension') -File | ForEach-Object { "extension/$($_.Name)" })
+# Shared loader (git submodule vendor/claude-desktop-webext), shipped as claude-desktop-webext/ in the ZIP.
+if (!(Test-Path -LiteralPath (Join-Path $root 'vendor\claude-desktop-webext\bin\webext.ps1'))) { throw 'Loader submodule missing. Run: git submodule update --init' }
+$renamed = [ordered]@{}
+foreach ($f in @('bin/webext.ps1', 'bin/webext.py', 'bin/webext.sh', 'LICENSE', 'README.md')) { $renamed["vendor/claude-desktop-webext/$f"] = "claude-desktop-webext/$f" }
 
 if (!$AllowDirty -and (Get-Command git -ErrorAction SilentlyContinue)) {
     Push-Location $root
-    try { $dirty = @(git status --porcelain -- $include) } finally { Pop-Location }
+    try { $dirty = @(git status --porcelain -- ($include + 'vendor/claude-desktop-webext')) } finally { Pop-Location }
     if ($dirty.Count) { throw "Uncommitted changes in release files (use -AllowDirty to override):`n$($dirty -join "`n")" }
 }
 
@@ -38,11 +42,12 @@ Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 $sums = New-Object System.Text.StringBuilder
 $zip = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
 try {
-    foreach ($rel in $include) {
+    foreach ($rel in @($include + @($renamed.Keys))) {
         $file = Join-Path $root ($rel -replace '/', '\')
         if (!(Test-Path -LiteralPath $file)) { throw "Missing release file: $rel" }
-        [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file, "$name/$rel", [System.IO.Compression.CompressionLevel]::Optimal)
-        [void]$sums.AppendFormat("{0}  {1}`n", (Get-Sha256 $file), $rel)
+        $entryName = if ($renamed.Contains($rel)) { $renamed[$rel] } else { $rel }
+        [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file, "$name/$entryName", [System.IO.Compression.CompressionLevel]::Optimal)
+        [void]$sums.AppendFormat("{0}  {1}`n", (Get-Sha256 $file), $entryName)
     }
     # Per-file checksums inside the ZIP, so users can verify an extracted copy.
     $entry = $zip.CreateEntry("$name/SHA256SUMS.txt")

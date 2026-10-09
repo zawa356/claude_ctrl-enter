@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Claude Ctrl+Enter",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Enter for newline, Ctrl+Enter to send in Claude Desktop, with Japanese IME protection and configurable keys.",
   "content_scripts": [
     {

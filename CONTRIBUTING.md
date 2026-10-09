@@ -3,6 +3,7 @@
 ## 開発環境
 
 - Windows 10 / 11、Windows PowerShell 5.1
+- `git clone --recurse-submodules`（または clone 後に `git submodule update --init`）。共通ローダーを `vendor/claude-desktop-webext` に置いています。
 - Node.js 20 以上（テスト用）。`npm install` で Playwright を取得します。ブラウザーは Windows 標準の Microsoft Edge を使います。
 - Git for Windows（Git Bash）。Linux 版スクリプトのテストに使います（無い場合はスキップ）。Linux 版の変更は `scripts/claude-keys.ps1` と挙動をそろえてください。
 - エディターは `.editorconfig` 対応のものを推奨します。
@@ -42,6 +43,6 @@
 
 ## English summary
 
-Requirements: Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`), Git Bash for the Linux installer test. Keep `*.ps1` as UTF-8 with BOM and CRLF, and keep `scripts/claude-keys.sh` behaving like `scripts/claude-keys.ps1`.
+Requirements: clone with `--recurse-submodules` (shared loader in `vendor/claude-desktop-webext`), Windows, PowerShell 5.1, Node.js 20+ for tests (`npm install`, `npm test`), Git Bash for the Linux installer test. Keep `*.ps1` as UTF-8 with BOM and CRLF, and keep `scripts/claude-keys.sh` behaving like `scripts/claude-keys.ps1`.
 Never modify Claude's own files, never change the extension install folder or add a manifest `key` (it would change the extension ID and lose users' settings), keep the installers as plain .bat + .ps1 (Windows) and bash (Linux), and when in doubt make key handling *not* send.
 Release: bump versions in `extension/manifest.json` and `package.json`, date the CHANGELOG section, then push a `vX.Y.Z` tag; CI builds the ZIP and attaches it to the GitHub Release.

@@ -1,0 +1,3 @@
+[submodule "vendor/claude-desktop-webext"]
+	path = vendor/claude-desktop-webext
+	url = https://github.com/zawa356/claude-desktop-webext.git
