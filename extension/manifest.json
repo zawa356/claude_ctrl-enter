@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Claude Enter Patch - Load Probe",
+  "version": "0.2.0",
+  "description": "Experimental Enter newline and Ctrl+Enter send with IME protection.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "main-probe.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "badge.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "permissions": [
+    "storage"
+  ]
+}
