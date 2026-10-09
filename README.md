@@ -54,7 +54,7 @@ Claude Desktop（Windows・Linux）で **Enter を改行、Ctrl+Enter を送信*
 | 項目 | 内容 |
 | --- | --- |
 | OS | Windows 10 / 11、Linux（Claude Desktop ベータが動く Debian / Ubuntu。実機未確認） |
-| Claude | Windows: Claude Desktop（MSIX パッケージ版）。Linux: Claude Desktop ベータ |
+| Claude | Windows: Claude Desktop（MSIX パッケージ版。従来のインストーラー版も検出はしますが、動作は未確認）。Linux: Claude Desktop ベータ |
 | 動作確認済みの版 | Windows 版 2.26454.2、2.31226.0（0.4.x は 2.31226.0 で確認） |
 | 必要なもの | Windows: Windows PowerShell 5.1（標準搭載）。Linux: bash と python3（3.8 以上。Ubuntu / Debian のデスクトップには標準搭載）。どちらも管理者権限は不要 |
 

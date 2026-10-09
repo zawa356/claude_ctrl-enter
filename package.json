@@ -1,6 +1,6 @@
 {
   "name": "claude-desktop-keybindings",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "description": "Development tooling for the Claude Desktop key-binding extension (the extension itself has no runtime dependencies).",
   "engines": {

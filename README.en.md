@@ -56,7 +56,7 @@ The UI and installer messages are in Japanese; the shared loader's output is in 
 | Item | Details |
 | --- | --- |
 | OS | Windows 10 / 11; Linux (Debian / Ubuntu running the Claude Desktop beta — not yet verified) |
-| Claude | Windows: Claude Desktop (MSIX package). Linux: Claude Desktop beta |
+| Claude | Windows: Claude Desktop (MSIX package; classic installer builds are detected but not yet verified). Linux: Claude Desktop beta |
 | Tested versions | Windows 2.26454.2, 2.31226.0 (0.4.x checked on 2.31226.0) |
 | Needs | Windows: Windows PowerShell 5.1 (built in). Linux: bash and python3 ≥ 3.8 (preinstalled on Ubuntu / Debian desktops). No administrator/root rights |
 
