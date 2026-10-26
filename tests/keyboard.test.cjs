@@ -6,9 +6,13 @@ const code = readFileSync(join(__dirname, '..', 'extension', 'keys.js'), 'utf8')
 let now = 1000, breaks = 0, sends = 0, status;
 let savedSettings = { enabled: true, send: 'Ctrl+Enter', newline: 'Enter' }; // as delivered by settings-ui.js
 const docListeners = [];
-class Element { closest() { return this.isEditor ? this : null; } }
+class Element {
+  closest() { return this.isEditor ? this : null; }
+  getAttribute(name) { return name === 'data-testid' ? this.testid : null; }
+}
 const editor = new Element();
 editor.isEditor = true;
+editor.testid = 'chat-input';
 // Suggestion plugin shaped like Claude's slash-command-suggestion$ (state.active toggles while the menu is open).
 const suggestion = { active: false };
 editor.editor = { commands: { setHardBreak: () => { breaks++; return true; } }, view: {},
@@ -87,9 +91,34 @@ event('keydown'); assert.equal(sends, 2);
 event('keydown', { shiftKey:true }); assert.equal(breaks, 4);
 configure({ enabled:true, send:'Ctrl+Enter', newline:'Shift+Enter' });
 assert.equal(event('keydown').prevented, true); assert.equal(sends, 2);
+// Claude Code: Enter newline is unchanged; send uses the native trusted key event
+// rather than searching for a Chat button (which does not exist in Code).
+configure({ enabled:true, send:'Ctrl+Enter', newline:'Enter' });
+editor.testid = 'code-prompt-input';
+buttons = [];
+const codeSend = event('keydown', { ctrlKey: true });
+assert.equal(codeSend.prevented, undefined, 'Code Ctrl+Enter must reach the app');
+assert.equal(codeSend.stopped, undefined, 'Code Ctrl+Enter must reach the app');
+const codeRepeat = event('keydown', { ctrlKey: true, repeat: true });
+assert.equal(codeRepeat.prevented, true, 'repeated Code send must be blocked');
+assert.equal(codeRepeat.stopped, true);
+const oldBreaks = breaks;
+assert.equal(event('keydown').prevented, true);
+assert.equal(breaks, oldBreaks + 1, 'Code Enter must still create a hard break');
+configure({ enabled:true, send:'Enter', newline:'Shift+Enter' });
+assert.equal(event('keydown').prevented, undefined, 'Code native Enter can send when explicitly assigned');
+assert.equal(event('keydown', { shiftKey: true }).prevented, true);
+configure({ enabled:true, send:'Shift+Enter', newline:'Enter' });
+assert.equal(event('keydown', { shiftKey: true }).prevented, true, 'unsupported Code send remap must fail closed');
+assert.equal(status, 'send-unavailable');
+configure({ enabled:true, send:'Ctrl+Enter', newline:'Enter' });
+editor.testid = 'chat-input';
+assert.equal(event('keydown', { ctrlKey: true }).prevented, true, 'Chat must never use Code native send');
+assert.equal(status, 'send-unavailable');
+buttons = [button];
 configure({ enabled:true, send:'Enter', newline:'Enter' });
 event('keydown'); assert.equal(sends, 2);
-window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, 4);
+window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, oldBreaks + 1);
 // Before settings-ui.js delivers the stored settings: newline works, the send key never sends.
 // Delivery (event) or the 3s fallback timer makes the configuration live.
 function pendingContext() {
