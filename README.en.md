@@ -129,6 +129,8 @@ If another tool overwrote the folder that Claude loads, run `install.bat` again;
 
 ## Known limitations
 
+> The in-development v0.5.0 fix delegates sends in the Claude Code tab to Claude's native key handler. In Code, only `Enter` and `Ctrl+Enter` are supported as send bindings; Chat's send-button behavior remains unchanged.
+
 - Uses unofficial behavior of Claude; an update may break it.
 - IME behavior has been verified with one Japanese IME only.
 - In the editor for an earlier message, the send key may not send (when the matching send button cannot be identified, nothing is sent, to avoid sending the wrong text).
