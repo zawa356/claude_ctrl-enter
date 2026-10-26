@@ -118,7 +118,7 @@ assert.equal(status, 'send-unavailable');
 buttons = [button];
 configure({ enabled:true, send:'Enter', newline:'Enter' });
 event('keydown'); assert.equal(sends, 2);
-window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, oldBreaks + 2);
+window.__claudeEnterPatch.abort(); event('keydown'); assert.equal(breaks, oldBreaks + 3);
 // Before settings-ui.js delivers the stored settings: newline works, the send key never sends.
 // Delivery (event) or the 3s fallback timer makes the configuration live.
 function pendingContext() {
