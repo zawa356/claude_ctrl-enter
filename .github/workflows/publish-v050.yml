@@ -50,10 +50,7 @@ jobs:
         run: |
           $tag = 'v0.5.0'
           $releaseCommit = 'c30a7bf057d662e491ab849d878d722659afa031'
-          gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            gh release edit $tag --repo $env:GITHUB_REPOSITORY --latest
-          } else {
-            gh release create $tag (Get-ChildItem dist\*.zip).FullName dist\SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --target $releaseCommit --title $tag --notes-file dist\NOTES.md --latest
-          }
+          # This one-time workflow creates a new release. A pre-existing tag/release
+          # causes gh to fail safely rather than rewriting previously published assets.
+          gh release create $tag (Get-ChildItem dist\*.zip).FullName dist\SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --target $releaseCommit --title $tag --notes-file dist\NOTES.md --latest
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
