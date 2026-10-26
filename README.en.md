@@ -40,11 +40,11 @@ To revert, run `bash uninstall.sh` and log in again. Diagnostics: `bash diagnose
 | Key | Claude default | With this tool (default settings) |
 | --- | --- | --- |
 | `Enter` | Send | Newline |
-| `Ctrl` + `Enter` | — | Send |
+| `Ctrl` + `Enter` | Chat: not assigned / Code: send (verified) | Send |
 | `Enter` that confirms IME conversion | Confirm | Confirm only — never sends or adds a newline |
 | `Enter` in the `/` command or mention menu | Pick item | Pick item (Claude's own behavior is kept) |
 
-- From "キー設定" (Key settings) in the sidebar, choose the send key and newline key from `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Alt+Enter`.
+- From "キー設定" (Key settings) in the sidebar, choose the send key and newline key from `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Alt+Enter`. The Code tab supports only `Enter` / `Ctrl+Enter` for sending.
 - Uncheck "キー設定を有効にする" (Enable key settings) to get Claude's default keys back without uninstalling.
 - Settings survive restarts, updates and reinstalls.
 - Works side by side with other tools that use the same shared loader, e.g. [claude-split-ui](https://github.com/zawa356/claude-split-ui), which restores the Chat / Cowork selector (0.4.0 and later).
@@ -57,7 +57,7 @@ The UI and installer messages are in Japanese; the shared loader's output is in 
 | --- | --- |
 | OS | Windows 10 / 11; Linux (Debian / Ubuntu running the Claude Desktop beta — not yet verified) |
 | Claude | Windows: Claude Desktop (MSIX package; classic installer builds are detected but not yet verified). Linux: Claude Desktop beta |
-| Tested versions | Windows 2.26454.2, 2.31226.0 (0.4.x checked on 2.31226.0) |
+| Tested versions | Windows 2.26454.2, 2.31226.0, 3.1623.1.0 (basic Chat/Code keys and Japanese IME verified on 3.1623.1.0) |
 | Needs | Windows: Windows PowerShell 5.1 (built in). Linux: bash and python3 ≥ 3.8 (preinstalled on Ubuntu / Debian desktops). No administrator/root rights |
 
 macOS is not supported (no test machine available).
@@ -129,7 +129,7 @@ If another tool overwrote the folder that Claude loads, run `install.bat` again;
 
 ## Known limitations
 
-> The in-development v0.5.0 fix delegates sends in the Claude Code tab to Claude's native key handler. In Code, only `Enter` and `Ctrl+Enter` are supported as send bindings; Chat's send-button behavior remains unchanged.
+> As of v0.5.0, the Claude Code tab delegates sends to Claude's native keyboard handler. Only `Enter` and `Ctrl+Enter` are supported as **send** bindings in Code; `Shift+Enter` and `Alt+Enter` sends are blocked to avoid accidental sends. Chat behavior is unchanged.
 
 - Uses unofficial behavior of Claude; an update may break it.
 - IME behavior has been verified with one Japanese IME only.
