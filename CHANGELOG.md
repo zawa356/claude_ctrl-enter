@@ -8,6 +8,23 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-26
+
+Claude Desktop の Code タブでも、Ctrl+Enter で送信できるようになりました。従来の Chat 側の動作と日本語 IME 保護は維持しています。
+
+### Fixed
+- Code タブの `data-testid="code-prompt-input"` には Chat 用の送信ボタンがなく、Ctrl+Enter を押すと「送信ボタンを特定できなかったため送信しませんでした」と表示される問題を修正しました。
+- Code タブでは、送信キーが `Enter` または `Ctrl+Enter` の場合に Claude 本来のキー処理へ委譲します。Chat タブでは従来どおり、対応する送信ボタンを特定してクリックします。
+- Enter 改行、IME の変換確定、連続キー入力、初期設定読込中の送信抑止について、Chat / Code の回帰テストを追加しました。
+
+### Verified
+- Windows Claude Desktop MSIX `3.1623.1.0` で、旧方式 v0.3.0 から共通ローダー方式への移行、Claude Code の Ctrl+Enter 送信、Chat の Enter 改行と Ctrl+Enter 送信、日本語 IME の変換確定（Chat / Code 両方）を実機確認しました。
+- Windows / Linux の CI テスト成功。Linux Claude Desktop の実機動作は未確認です。
+
+### Known limitations
+- Code タブの送信キーとして利用できるのは `Enter` / `Ctrl+Enter` です。送信キーを `Shift+Enter` / `Alt+Enter` に変更した場合、Code では誤送信防止のため送信しません（Chat 側は従来どおり対応）。
+- Claude の内部 DOM・キーハンドラーに依存するため、将来の Claude アップデートで動作しなくなる可能性があります。
+
 ## [0.4.3] - 2026-10-09
 
 0.4.2 で「Multiple installations found」と表示されて導入できなかった問題を直した版です。同梱する共通ローダー claude-desktop-webext を v0.2.1 に更新しました。キー操作の機能は変わりません。

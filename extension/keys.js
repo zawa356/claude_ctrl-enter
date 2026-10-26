@@ -91,6 +91,14 @@
       if (key === 'Enter' || key === 'Ctrl+Enter') { e.preventDefault(); e.stopImmediatePropagation(); }
       return;
     }
+    // Claude Code has its own Enter/Ctrl+Enter send handler and no Chat send button.
+    // Only pass through the two confirmed native send keys for this exact editor.
+    // Before settings arrive, on repeats, or with an incompatible editor, fail closed.
+    if (action === 'send' && el.getAttribute('data-testid') === 'code-prompt-input' &&
+        (key === 'Enter' || key === 'Ctrl+Enter') && ready && !e.repeat && compatible(el)) {
+      status('active');
+      return; // Let Claude Code's trusted original key event perform the send.
+    }
     e.preventDefault();
     e.stopImmediatePropagation();
     if (e.repeat || (action === 'send' && !ready)) return;

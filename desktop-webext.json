@@ -4,7 +4,7 @@
   "source": "extension",
   "order": 50,
   "testedClaudeVersions": {
-    "windows": ["2.26454.2.0", "2.31226.0.0"],
+    "windows": ["2.26454.2.0", "2.31226.0.0", "3.1623.1.0"],
     "linux": []
   },
   "adopt": {

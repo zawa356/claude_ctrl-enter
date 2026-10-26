@@ -15,7 +15,7 @@ const fixture = `<!doctype html><html><head><meta charset="utf-8"></head><body s
     <div style="flex:1"><button data-testid="user-menu-button">Profile</button></div></div></div>
 </aside>
 <main style="flex:1;padding:20px">
-  <div id="editor" class="tiptap ProseMirror" contenteditable="true" style="border:1px solid #888;min-height:60px"></div>
+  <div id="editor" data-testid="chat-input" class="tiptap ProseMirror" contenteditable="true" style="border:1px solid #888;min-height:60px"></div>
   <button data-testid="chat-input-send" type="button">Send</button>
   <div id="menu" role="menu" hidden><div role="menuitem">item</div></div>
 </main>
@@ -100,6 +100,22 @@ const storageMock = () => {
     assert.deepEqual(await press('Enter'), ['newline']);
     assert.deepEqual(await press('Control+Enter'), ['click-send']);
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-claude-enter-probe-main')), 'active');
+
+    // Claude Code has the same TipTap editor but no chat-input-send button.
+    // Its native key handler sends on Ctrl+Enter (and Enter while the patch is disabled).
+    await page.evaluate(() => {
+      document.getElementById('editor').setAttribute('data-testid', 'code-prompt-input');
+      document.querySelector('[data-testid="chat-input-send"]').hidden = true;
+    });
+    assert.deepEqual(await press('Enter'), ['newline'], 'Code Enter remains a hard break');
+    assert.deepEqual(await press('Control+Enter'), ['app-send'], 'Code Ctrl+Enter uses the native handler');
+    assert.equal(await label(), '有効', 'Code native send must not report missing button');
+    // Switching back to Chat retains the old path.
+    await page.evaluate(() => {
+      document.getElementById('editor').setAttribute('data-testid', 'chat-input');
+      document.querySelector('[data-testid="chat-input-send"]').hidden = false;
+    });
+    assert.deepEqual(await press('Control+Enter'), ['click-send']);
     // Ctrl+Enter in another editor must not press the main composer's send button.
     assert.deepEqual(await press('Control+Enter', '#other'), []);
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-claude-enter-probe-main')), 'send-unavailable');

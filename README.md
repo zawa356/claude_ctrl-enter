@@ -40,11 +40,11 @@ Claude Desktop（Windows・Linux）で **Enter を改行、Ctrl+Enter を送信*
 | 操作 | 標準の Claude | このツール導入後（初期設定） |
 | --- | --- | --- |
 | `Enter` | 送信 | 改行 |
-| `Ctrl` + `Enter` | — | 送信 |
+| `Ctrl` + `Enter` | Chat は未割当／Code は送信（実機確認） | 送信 |
 | 日本語入力の変換確定の `Enter` | 確定 | 確定のみ。送信も改行もしない |
 | `/` コマンドやメンションの候補で `Enter` | 候補を選択 | 候補を選択（Claude の標準動作のまま） |
 
-- サイドバーの「キー設定」から、送信キーと改行キーを `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Alt+Enter` の中から選べます。
+- サイドバーの「キー設定」から、送信キーと改行キーを `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Alt+Enter` の中から選べます。Claude Code タブの送信は `Enter` / `Ctrl+Enter` に限り対応します。
 - 「キー設定を有効にする」のチェックを外すと、Claude 標準の操作に戻ります（アンインストール不要）。
 - 設定は Claude を再起動しても、更新・再導入しても保持されます。
 - 同じ共通ローダーを使う他のツール（例：Chat / Cowork の切り替えを戻す [claude-split-ui](https://github.com/zawa356/claude-split-ui)）と同時に使えます（0.4.0 以降）。
@@ -55,7 +55,7 @@ Claude Desktop（Windows・Linux）で **Enter を改行、Ctrl+Enter を送信*
 | --- | --- |
 | OS | Windows 10 / 11、Linux（Claude Desktop ベータが動く Debian / Ubuntu。実機未確認） |
 | Claude | Windows: Claude Desktop（MSIX パッケージ版。従来のインストーラー版も検出はしますが、動作は未確認）。Linux: Claude Desktop ベータ |
-| 動作確認済みの版 | Windows 版 2.26454.2、2.31226.0（0.4.x は 2.31226.0 で確認） |
+| 動作確認済みの版 | Windows 版 2.26454.2、2.31226.0、3.1623.1.0（3.1623.1.0 は Chat / Code の基本キー操作・日本語IMEを実機確認） |
 | 必要なもの | Windows: Windows PowerShell 5.1（標準搭載）。Linux: bash と python3（3.8 以上。Ubuntu / Debian のデスクトップには標準搭載）。どちらも管理者権限は不要 |
 
 macOS には対応していません（確認できる環境がないため）。
@@ -129,6 +129,8 @@ Claude を「完全に」終了したか確認してください。ウィンド�
 別のツールが Claude の読み込むフォルダーを書き換えた場合も表示されなくなります。そのときは `install.bat` をもう一度実行すると、フォルダーが作り直されます。
 
 ## 既知の制限
+
+> v0.5.0 以降、Claude Code タブの送信処理は Claude 標準のキー処理に委譲します。Code タブで送信キーに設定できるのは `Enter` / `Ctrl+Enter` のみです。`Shift+Enter` / `Alt+Enter` 送信は安全のため抑止されます。Chat タブでは従来どおり各キーを設定できます。
 
 - Claude の非公式な仕組みを利用しています。Claude の更新で動かなくなる可能性があります。
 - 日本語入力は 1 種類の IME でのみ確認しています。
