@@ -158,7 +158,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1   
 
 "Claude" is a trademark of Anthropic. This project is not affiliated with Anthropic.
 
-### Installation discovery (development version)
+### Installation discovery (explicit Claude path)
 
 The shared loader checks MSIX registration, running Claude processes, classic installer
 registry entries and standard locations. For an ambiguous or nonstandard installation,
