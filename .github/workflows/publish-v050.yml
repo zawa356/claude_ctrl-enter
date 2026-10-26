@@ -1,0 +1,59 @@
+name: Publish v0.5.0 (one-time)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v050.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.repository == 'zawa356/claude_ctrl-enter'
+    runs-on: windows-latest
+    steps:
+      - name: Check out verified release commit
+        uses: actions/checkout@v5
+        with:
+          ref: c30a7bf057d662e491ab849d878d722659afa031
+          submodules: true
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install test dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - name: Test release commit
+        run: npm test
+      - name: Build release ZIP and hashes
+        shell: powershell
+        run: |
+          $version = (Get-Content extension\manifest.json -Raw | ConvertFrom-Json).version
+          if ($version -ne '0.5.0') { throw "Expected version 0.5.0, got $version" }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-release.ps1
+      - name: Prepare release notes
+        shell: powershell
+        run: |
+          $text = Get-Content CHANGELOG.md -Raw -Encoding UTF8
+          $m = [regex]::Match($text, '(?ms)^## \[0\.5\.0\][^\n]*\n(.*?)(?=^## \[|\z)')
+          if (!$m.Success) { throw 'No CHANGELOG section for 0.5.0' }
+          [IO.File]::WriteAllText("$PWD\dist\NOTES.md", $m.Groups[1].Value.Trim(), (New-Object Text.UTF8Encoding($false)))
+      - name: Publish release as Latest
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'v0.5.0'
+          $releaseCommit = 'c30a7bf057d662e491ab849d878d722659afa031'
+          gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit $tag --repo $env:GITHUB_REPOSITORY --latest
+          } else {
+            gh release create $tag (Get-ChildItem dist\*.zip).FullName dist\SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --target $releaseCommit --title $tag --notes-file dist\NOTES.md --latest
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
