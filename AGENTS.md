@@ -24,12 +24,12 @@
 - ユーザーの目的は、既存のClaude MSIXと通常のアイコン／起動経路を維持し、GUI設定可能なキー改造をGitHub公開できる品質に仕上げること。
 - 専用ランチャーを前提にしない。既存ショートカットを差し替えない。
 - WindowsAppsの所有権・ACL、署名、MSIX、claude.exe、app.asarを変更しない。
-- 現在の公開版は v0.4.3（https://github.com/zawa356/claude_ctrl-enter 、public）。v0.5.0候補は fix/code-native-send-v050 ブランチ／PR #2 で作成し、正式リリースは承認待ち。最新の状態・未解決課題・次の作業は `docs/AISTATE.md` の §0・§6・§9 を見ること。
-- 現行の実機（Claude Desktop MSIX 3.1623.1.0）には v0.5.0候補コード（manifest上は当初0.4.3）が適用済み、旧v0.3.0からローダー方式に移行済み。旧 `legacy/install-probe.ps1` は再実行しない。更新は Release の ZIP の `install.bat` で行う（VMで手順を確認済み）。開発用ファイルの編集と、導入先への適用を区別すること。
-- 過去の実機検証でHyper-V VMを使用した（詳細は `docs/AISTATE.md` のENV-VM）。今回の v0.5.0検証は別の実機で実施。チェックポイントで戻せるが、導入・環境変更の前にはユーザーの了承とチェックポイント作成を依頼する。
+- 現在の公開版・Latest は v0.5.0（2026-10-26、https://github.com/zawa356/claude_ctrl-enter/releases/tag/v0.5.0、public）。PR #2 は main にマージ済み（c30a7bf）。最新の状態・未解決課題・次の作業は `docs/AISTATE.md` の §0・§6・§9 を見ること。
+- 2026-10-26 の実機（Claude Desktop MSIX 3.1623.1.0）では正式版と同じキー処理の検証コード（導入時manifest表記は0.4.3）が稼働し、旧v0.3.0からローダー方式に移行済み。Chat・Codeの送信・改行・日本語IME変換確定を確認。旧 `legacy/install-probe.ps1` は再実行しない。更新は Release の ZIP の `install.bat` で行う（VMで手順を確認済み）。開発用ファイルの編集と、導入先への適用を区別すること。
+- 過去の実機検証でHyper-V VMを使用した（詳細は `docs/AISTATE.md` のENV-VM）。今回の v0.5.0検証は別の実機で実施。VMで変更を行う場合は事前にユーザー了承・チェックポイント要否を確認する。
 - 2026-10-09 にユーザーが公開準備のため commit・push・gh の利用を許可した（リポジトリ `zawa356/claude_ctrl-enter`）。ただし force push、リポジトリの削除・再作成、公開範囲（private/public）の変更、Release の公開・編集は、その都度ユーザーに確認する。
 - 公開系の操作（公開範囲の変更、タグの push 等）は Claude Code の自動モードで AI 側から拒否されることがある。その場合は迂回せず、実行するコマンドをそのままユーザーに渡す。
-- リリース手順は `CONTRIBUTING.md`（版を上げる → CHANGELOG に日付付きの節 → `vX.Y.Z` タグを push → CI が ZIP と SHA256 を Release に添付）。配布物（ZIP の中身）が変わらないドキュメントだけの変更では新しい版を作らない。
+- リリース手順は `CONTRIBUTING.md`（版を上げる → CHANGELOG に日付付きの節 → `vX.Y.Z` タグを push → CI が ZIP と SHA256 を Release に添付）。v0.5.0はマージコミット c30a7bf を対象に一時的なActionsワークフローでZIP・SHA256・Latest指定付きReleaseを公開し、ワークフローは公開後に削除済み。標準のタグpushによるリリースも引き続き可能。配布物（ZIP の中身）が変わらないドキュメントだけの変更では新しい版を作らない。
 - 本名に限らず、push 前に全コミットを検索して個人情報・組織ID・トークンが無いことを確認する。
 - インストーラーは bat + ps1 だけで完結させる。exe・MSI・コード署名・外部ダウンロード・管理者権限・実行ポリシーの恒久変更は使わない（SAC／ウイルス対策に弾かれるのを避けるため。ユーザー方針）。ps1 は UTF-8 BOM付き・CRLF、bat は CRLF。
 - 既存ファイル、React DevTools、環境変数を無断で上書きしない。導入先を更新する前にバックアップを取ること。
