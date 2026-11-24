@@ -225,6 +225,8 @@ L55 2026-11-24 [USER_DECISION] User explicitly rejected AutoHotkey/AHK. L54 AHK/
 
 L56 2026-11-24 [USER_DECISION+AI_READ] User requires native Claude Desktop specifically for **local MCP**; browser/PWA replacement explicitly rejected. AHK rejected. Keep focus on Desktop Chat WebContents JS-level workaround; check existing `extension/keys.js` TipTap editor.commands.setHardBreak() compatibility with current `[data-testid=chat-input][contenteditable=true]` before temporary manual DevTools injection. Do not confuse PoC/manual console with durable loader. Issue #3 updated.
 
+L57 2026-11-24 [USER_REAL] Claude Desktop 6.28899.6.0 Chat WebContents DevTools probe `[data-testid="chat-input"][contenteditable="true"]` => found:true; tiptap:true (`.tiptap.ProseMirror`), editorPresent:true, `typeof editor.commands.setHardBreak === 'function'`, `typeof editor.view.composing === 'boolean'`. Thus existing DOM-level TipTap newline and IME state APIs survive; regression is injection loader, not absent editor API. Next test one-time reversible Chat DevTools keydown PoC (plain Enter newline only, Ctrl+Enter native, IME guarded), validate before seeking automatic persistence. Desktop required for local MCP; PWA/AHK excluded.
+
 N14 OPEN (L48): investigate Claude Desktop 6.28899.6.0 REACT_PROFILE injection regression; diagnose actual ASAR read-only, identify supported alternative or safe app-specific keyboard remap; maintain Windows+IME and avoid modifying Claude binaries. Track Issue #3.
 
 N13 DONE (L47): PR #2 merged, v0.5.0 published Latest, Windows Code/Chat basic keys and IME verified. Further work only for future Claude updates or new issues.
