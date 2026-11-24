@@ -213,6 +213,8 @@ L49 2026-11-24 [USER_REAL] Binary-safe read-only PowerShell scan of Claude Deskt
 
 L50 2026-11-24 [USER_REAL] Read-only context inspection of app.asar around loadExtension confirms active private class U_=class with constructor(e,t,n,...){this.#a=o,this.#o=t,this.#e=e,...} and two Electron session.extensions.loadExtension calls. web-store manager validates extension id/version/manifest/files, safety guards and logs [web-store]. This is not proof of loading in Chat session: first constructor arg e is supplied externally. Next diagnostic is to locate `new U_(` call sites and trace session origin. Do not claim restoration path or loadExtension generic API is sufficient. No user machine mutations performed.
 
+L51 2026-11-24 [USER_REAL] Read-only binary scan found a single constructor call site for the web-store extension manager: `Z??=new U_(e,x,Xv.signedListKey,YC,JS,HS,SC)`, followed by `.guard()`, `.loadInstalled(...)`. First argument `e` is the Electron Session used in `this.#e.extensions.loadExtension(...)`; provenance and whether browser-specific have NOT been established. `signedListKey` suggests verification policy. Next inspect local source snippet preceding the constructor to see how `e` is assigned and which Electron partition it denotes. No installer or Claude modifications.
+
 N14 OPEN (L48): investigate Claude Desktop 6.28899.6.0 REACT_PROFILE injection regression; diagnose actual ASAR read-only, identify supported alternative or safe app-specific keyboard remap; maintain Windows+IME and avoid modifying Claude binaries. Track Issue #3.
 
 N13 DONE (L47): PR #2 merged, v0.5.0 published Latest, Windows Code/Chat basic keys and IME verified. Further work only for future Claude updates or new issues.
