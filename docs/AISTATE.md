@@ -211,6 +211,8 @@ L48 2026-11-24 [USER_REAL+AI_READ] Claude Desktop Windows MSIX 6.28899.6.0 broke
 ## 9. NEXT (proposed; user picks)
 L49 2026-11-24 [USER_REAL] Binary-safe read-only PowerShell scan of Claude Desktop 6.28899.6.0 app.asar with 4 MiB chunks returned REACT_PROFILE=False, loadReactDevTools=False, react-devtools=False, loadExtension=True. Strong support that historic REACT_PROFILE devtools extension loading branch was removed; generic loadExtension may be unrelated. Next inspect isolated reference contexts/read-only ASAR file structure, then investigate safe alternatives. Do not interpret loadExtension=True as a confirmed new injection path. Read only, no installer changes.
 
+L50 2026-11-24 [USER_REAL] Read-only context inspection of app.asar around loadExtension confirms active private class U_=class with constructor(e,t,n,...){this.#a=o,this.#o=t,this.#e=e,...} and two Electron session.extensions.loadExtension calls. web-store manager validates extension id/version/manifest/files, safety guards and logs [web-store]. This is not proof of loading in Chat session: first constructor arg e is supplied externally. Next diagnostic is to locate `new U_(` call sites and trace session origin. Do not claim restoration path or loadExtension generic API is sufficient. No user machine mutations performed.
+
 N14 OPEN (L48): investigate Claude Desktop 6.28899.6.0 REACT_PROFILE injection regression; diagnose actual ASAR read-only, identify supported alternative or safe app-specific keyboard remap; maintain Windows+IME and avoid modifying Claude binaries. Track Issue #3.
 
 N13 DONE (L47): PR #2 merged, v0.5.0 published Latest, Windows Code/Chat basic keys and IME verified. Further work only for future Claude updates or new issues.
