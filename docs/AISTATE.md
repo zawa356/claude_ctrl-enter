@@ -227,6 +227,8 @@ L56 2026-11-24 [USER_DECISION+AI_READ] User requires native Claude Desktop speci
 
 L57 2026-11-24 [USER_REAL] Claude Desktop 6.28899.6.0 Chat WebContents DevTools probe `[data-testid="chat-input"][contenteditable="true"]` => found:true; tiptap:true (`.tiptap.ProseMirror`), editorPresent:true, `typeof editor.commands.setHardBreak === 'function'`, `typeof editor.view.composing === 'boolean'`. Thus existing DOM-level TipTap newline and IME state APIs survive; regression is injection loader, not absent editor API. Next test one-time reversible Chat DevTools keydown PoC (plain Enter newline only, Ctrl+Enter native, IME guarded), validate before seeking automatic persistence. Desktop required for local MCP; PWA/AHK excluded.
 
+L58 2026-11-24 [AI_RESEARCH] User prioritized loader recovery over TipTap behavior. Source-checked Electron Fuses support and external claude-desktop-debian reports hardened Linux build: RunAsNode / NodeOptions / NodeCliInspect OFF; integrity and OnlyLoadFromAsar ON. Windows MSIX 6.28899.6.0 state remains unverified, so perform read-only fuse wire inspection on original claude.exe before any claim. `NODE_OPTIONS --require` conditional candidate only; Web Store loader is Browser pane only; DevTools Snippets are manual. Desktop+local MCP mandatory; no AHK/PWA nor app patch without explicit owner choice.
+
 N14 OPEN (L48): investigate Claude Desktop 6.28899.6.0 REACT_PROFILE injection regression; diagnose actual ASAR read-only, identify supported alternative or safe app-specific keyboard remap; maintain Windows+IME and avoid modifying Claude binaries. Track Issue #3.
 
 N13 DONE (L47): PR #2 merged, v0.5.0 published Latest, Windows Code/Chat basic keys and IME verified. Further work only for future Claude updates or new issues.
