@@ -62,6 +62,9 @@ The UI and installer messages are in Japanese; the shared loader's output is in 
 
 macOS is not supported (no test machine available).
 
+> [!WARNING]
+> **Regression reported on 2026-11-24:** Windows Claude Desktop `6.28899.6.0` reports a healthy installed extension slot, but the extension scripts do not appear in the Chat page, so the keybindings and settings UI are inactive. See [Issue #3](https://github.com/zawa356/claude_ctrl-enter/issues/3). Reinstalling the same extension has not been shown to help. Do not patch the Claude binary.
+
 Untested versions only produce a warning in the diagnostics; installation still proceeds. Uninstall if it does not work.
 
 ## How it works and what it changes
