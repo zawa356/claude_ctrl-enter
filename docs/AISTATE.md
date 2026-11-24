@@ -223,6 +223,8 @@ L54 2026-11-24 [PRIOR_REAL+AI_DESIGN] Switched to evaluate external hook. Prior 
 
 L55 2026-11-24 [USER_DECISION] User explicitly rejected AutoHotkey/AHK. L54 AHK/UIA design is historical only, NOT approved for implementation or further testing. Do not substitute a C#/Rust clone of the same unverified OS-level IME heuristic as though it solves accuracy. Examine Chromium MV3 extension in normal browser or PWA (manifest already content_scripts matches https://claude.ai/* and MAIN world keys.js; functionality needs actual validation), or manual Chat DevTools script injection as temporary desktop-only workaround; be clear that browser PWA differs from native Desktop/Code tab. Issue #3 updated. No AHK work; no Claude modification.
 
+L56 2026-11-24 [USER_DECISION+AI_READ] User requires native Claude Desktop specifically for **local MCP**; browser/PWA replacement explicitly rejected. AHK rejected. Keep focus on Desktop Chat WebContents JS-level workaround; check existing `extension/keys.js` TipTap editor.commands.setHardBreak() compatibility with current `[data-testid=chat-input][contenteditable=true]` before temporary manual DevTools injection. Do not confuse PoC/manual console with durable loader. Issue #3 updated.
+
 N14 OPEN (L48): investigate Claude Desktop 6.28899.6.0 REACT_PROFILE injection regression; diagnose actual ASAR read-only, identify supported alternative or safe app-specific keyboard remap; maintain Windows+IME and avoid modifying Claude binaries. Track Issue #3.
 
 N13 DONE (L47): PR #2 merged, v0.5.0 published Latest, Windows Code/Chat basic keys and IME verified. Further work only for future Claude updates or new issues.
